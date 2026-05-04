@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:varahiowner/views/aboutus_screen.dart';
 import 'package:varahiowner/views/login_screen.dart';
-import 'package:varahiowner/views/mycar_screen.dart';
+import 'package:varahiowner/views/my_cars_screen.dart';
 import 'package:varahiowner/views/myprofile_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MyCarScreen()),
+                      MaterialPageRoute(builder: (context) => MyCarsScreen()),
                     );
                   },
                 ),

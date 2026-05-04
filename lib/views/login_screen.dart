@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:varahiowner/helpers/toast_helper.dart';
+import 'package:varahiowner/helpers/shared_pref_helper.dart';
 import 'package:varahiowner/providers/auth_provider.dart';
 import 'package:varahiowner/views/navbar_screen.dart';
 import 'signup_screen.dart';
@@ -15,15 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  String? _errorMessage;
 
   static const _brand = Color(0xFF1D9E75);
   static const _brandLight = Color(0xFFE1F5EE);
   static const _brandDark = Color(0xFF0F6E56);
-
-  // ── Hardcoded credentials ──────────────────────────────────────────────────
-  static const _validMobile = '1234567890';
-  static const _validPassword = '123456';
 
   @override
   void dispose() {
@@ -32,28 +29,33 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     final mobile = _mobileController.text.trim();
     final password = _passwordController.text.trim();
 
+              print("ooooooooooo$mobile");
+                                    print("ooooooooooo$password");
+
     if (mobile.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter both mobile number and password.'),
-          backgroundColor: Colors.black87,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      ToastHelper.showError(context, 'Please enter both mobile number and password.');
       return;
     }
 
-    if (mobile == _validMobile && password == _validPassword) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
+    final provider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await provider.login(mobile, password);
+      print("kkkkkkkkk$success");
+
+    if (success) {
+      print("kkkkkkkkk$success");
+      ToastHelper.showSuccess(context, 'Login successful!');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      }
     } else {
-      setState(() => _errorMessage = 'Invalid mobile number or password.');
+      ToastHelper.showError(context, provider.errorMessage);
     }
   }
 
@@ -71,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 48),
 
-              // ── Logo ───────────────────────────────────────────────────
+              // Logo
               Center(
                 child: SizedBox(
                   width: 100,
@@ -87,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // ── Headline ───────────────────────────────────────────────
+              // Headline
               const Center(
                 child: Text(
                   'Welcome back',
@@ -113,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 36),
 
-              // ── Card ───────────────────────────────────────────────────
+              // Card
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -124,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Mobile field ───────────────────────────────────
+                    // Mobile field
                     const Text(
                       'MOBILE NUMBER',
                       style: TextStyle(
@@ -138,13 +140,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _mobileController,
                       keyboardType: TextInputType.phone,
-                      onChanged: (_) => setState(() => _errorMessage = null),
                       style: const TextStyle(
                         fontSize: 15,
                         color: Colors.black87,
                       ),
                       decoration: InputDecoration(
-                        hintText: '+91 98765 43210',
+                        hintText: 'Enter 10 digit mobile number',
                         hintStyle: const TextStyle(
                           fontSize: 14,
                           color: Colors.black26,
@@ -193,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── Password field ─────────────────────────────────
+                    // Password field
                     const Text(
                       'PASSWORD',
                       style: TextStyle(
@@ -207,7 +208,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      onChanged: (_) => setState(() => _errorMessage = null),
                       style: const TextStyle(
                         fontSize: 15,
                         color: Colors.black87,
@@ -281,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 20),
 
-                    // ── Login button ───────────────────────────────────
+                    // Login button
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -315,48 +315,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              // ── Error banner ───────────────────────────────────────────
-              if (_errorMessage != null || provider.statusMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 11,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCEBEB),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Colors.redAccent.withOpacity(0.25),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline_rounded,
-                          size: 15,
-                          color: Colors.redAccent,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _errorMessage ?? provider.statusMessage,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
               const SizedBox(height: 28),
 
-              // ── Divider ────────────────────────────────────────────────
+              // Divider
               Row(
                 children: [
                   Expanded(
@@ -383,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              // ── Register button ────────────────────────────────────────
+              // Register button
               SizedBox(
                 width: double.infinity,
                 height: 48,

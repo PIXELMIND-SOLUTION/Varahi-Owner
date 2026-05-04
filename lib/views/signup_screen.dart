@@ -2,8 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:varahiowner/model/vendor_model.dart';
+import 'package:varahiowner/helpers/toast_helper.dart';
+import 'package:varahiowner/model/car_model.dart';
+import 'package:varahiowner/model/owner_model.dart';
 import 'package:varahiowner/providers/auth_provider.dart';
+import 'package:varahiowner/views/login_screen.dart';
+import 'package:varahiowner/views/navbar_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,72 +19,223 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   int _currentStep = 0;
 
-  // Step 1 — Owner
-  final _nameController = TextEditingController();
+  // Step 1 — Owner Details
+  final _fullNameController = TextEditingController();
   final _mobileController = TextEditingController();
-  final _idProofController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _aadharController = TextEditingController();
 
-  // Step 2 — Vehicle
+  // Step 2 — Car Details
   final _carNameController = TextEditingController();
-  final _regNumberController = TextEditingController();
-  final _modelYearController = TextEditingController();
-  String? _fuelType;
-  String? _seatCapacity;
+  final _modelController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _pricePerHourController = TextEditingController();
+  final _pricePerDayController = TextEditingController();
+  final _delayPerHourController = TextEditingController();
+  final _delayPerDayController = TextEditingController();
+  final _typeController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _carTypeController = TextEditingController();
+  final _fuelController = TextEditingController();
+  final _seatsController = TextEditingController();
+  final _vehicleNumberController = TextEditingController();
+  final _branchNameController = TextEditingController();
+  final _branchLatController = TextEditingController();
+  final _branchLngController = TextEditingController();
+  bool _isPremium = true;
 
   // Step 3 — Documents
-  PlatformFile? _rcFile;
-  PlatformFile? _insuranceFile;
+  List<File> _carImages = [];
+  List<File> _carDocs = [];
 
   static const _brand = Color(0xFF1D9E75);
   static const _brandLight = Color(0xFFE1F5EE);
   static const _brandDark = Color(0xFF0F6E56);
 
-  final _fuelOptions = ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'];
-  final _seatOptions = ['4 seats', '5 seats', '6 seats', '7 seats'];
-
   @override
   void dispose() {
-    _nameController.dispose();
+    _fullNameController.dispose();
     _mobileController.dispose();
-    _idProofController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _aadharController.dispose();
     _carNameController.dispose();
-    _regNumberController.dispose();
-    _modelYearController.dispose();
+    _modelController.dispose();
+    _yearController.dispose();
+    _pricePerHourController.dispose();
+    _pricePerDayController.dispose();
+    _delayPerHourController.dispose();
+    _delayPerDayController.dispose();
+    _typeController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _carTypeController.dispose();
+    _fuelController.dispose();
+    _seatsController.dispose();
+    _vehicleNumberController.dispose();
+    _branchNameController.dispose();
+    _branchLatController.dispose();
+    _branchLngController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickFile(bool isRc) async {
+  Future<void> _pickCarImages() async {
     final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      type: FileType.image,
+      allowMultiple: true,
     );
     if (result != null && result.files.isNotEmpty) {
       setState(() {
-        if (isRc) {
-          _rcFile = result.files.first;
-        } else {
-          _insuranceFile = result.files.first;
-        }
+        _carImages = result.files.map((file) => File(file.path!)).toList();
       });
+      ToastHelper.showSuccess(context, '${_carImages.length} image(s) selected');
     }
   }
 
-  void _submit() {
-    final provider = Provider.of<AuthProvider>(context, listen: false);
-    final vendor = VendorModel(
-      name: _nameController.text.trim(),
-      mobile: _mobileController.text.trim(),
-      idProof: _idProofController.text.trim(),
-      carName: _carNameController.text.trim(),
-      modelNumber: _modelYearController.text.trim(),
-      registerNumber: _regNumberController.text.trim(),
-      fuelType: _fuelType ?? '',
-      carDocument: _rcFile?.path ?? '',
-      pickupLocation: '',
-      latitude: 0.0,
-      longitude: 0.0,
+  Future<void> _pickCarDocs() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      allowMultiple: true,
     );
-    provider.register(vendor);
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _carDocs = result.files.map((file) => File(file.path!)).toList();
+      });
+      ToastHelper.showSuccess(context, '${_carDocs.length} document(s) selected');
+    }
+  }
+
+  void _removeCarImage(int index) {
+    setState(() {
+      _carImages.removeAt(index);
+    });
+    ToastHelper.showInfo(context, 'Image removed');
+  }
+
+  void _removeCarDoc(int index) {
+    setState(() {
+      _carDocs.removeAt(index);
+    });
+    ToastHelper.showInfo(context, 'Document removed');
+  }
+
+  Future<void> _submitRegistration() async {
+    // Validate Step 1
+    if (_fullNameController.text.isEmpty ||
+        _mobileController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ToastHelper.showError(context, 'Please fill all owner details');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ToastHelper.showError(context, 'Passwords do not match');
+      return;
+    }
+
+    if (_mobileController.text.length != 10) {
+      ToastHelper.showError(context, 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    if (!_emailController.text.contains('@')) {
+      ToastHelper.showError(context, 'Please enter a valid email address');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      ToastHelper.showError(context, 'Password must be at least 6 characters');
+      return;
+    }
+
+    // Validate Step 2
+    if (_carNameController.text.isEmpty ||
+        _modelController.text.isEmpty ||
+        _yearController.text.isEmpty ||
+        _vehicleNumberController.text.isEmpty) {
+      ToastHelper.showError(context, 'Please fill all required car details');
+      return;
+    }
+
+    // Validate Step 3
+    if (_carImages.isEmpty) {
+      ToastHelper.showError(context, 'Please upload at least one car image');
+      return;
+    }
+
+    if (_carDocs.isEmpty) {
+      ToastHelper.showError(context, 'Please upload car documents');
+      return;
+    }
+
+    final owner = OwnerModel(
+      fullName: _fullNameController.text.trim(),
+      mobileNumber: _mobileController.text.trim(),
+      email: _emailController.text.trim(),
+      aadharNumber: _aadharController.text.isNotEmpty ? _aadharController.text.trim() : null,
+      password: _passwordController.text,
+    );
+
+    final car = CarModel(
+      carName: _carNameController.text.trim(),
+      model: _modelController.text.trim(),
+      year: _yearController.text.trim(),
+      pricePerHour: double.tryParse(_pricePerHourController.text) ?? 0,
+      pricePerDay: double.tryParse(_pricePerDayController.text) ?? 0,
+      delayPerHour: double.tryParse(_delayPerHourController.text) ?? 0,
+      delayPerDay: double.tryParse(_delayPerDayController.text) ?? 0,
+      extendedPrice: {
+        'perHour': 200,
+        'perDay': 1500,
+      },
+      type: _typeController.text.trim().isEmpty ? 'Sedan' : _typeController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty 
+          ? 'Comfortable city car' 
+          : _descriptionController.text.trim(),
+      location: _locationController.text.trim().isEmpty ? 'Mumbai' : _locationController.text.trim(),
+      carType: _carTypeController.text.trim().isEmpty ? 'Manual' : _carTypeController.text.trim(),
+      fuel: _fuelController.text.trim().isEmpty ? 'Petrol' : _fuelController.text.trim(),
+      seats: int.tryParse(_seatsController.text) ?? 5,
+      vehicleNumber: _vehicleNumberController.text.trim().toUpperCase(),
+      branchName: _branchNameController.text.trim().isEmpty 
+          ? 'Main Branch' 
+          : _branchNameController.text.trim(),
+      branchLat: double.tryParse(_branchLatController.text) ?? 17.315289,
+      branchLng: double.tryParse(_branchLngController.text) ?? 78.561221,
+      isPremium: _isPremium,
+      availability: [
+        {
+          'date': '2025/12/20',
+          'timeSlots': ['09:00', '18:00']
+        }
+      ],
+    );
+
+    final provider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await provider.registerWithCar(
+      owner: owner,
+      car: car,
+      carImages: _carImages,
+      carDocs: _carDocs,
+    );
+print("kkkkkkkkkkkk$success");
+    if (success) {
+      ToastHelper.showSuccess(context, 'Registration successful!');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } else {
+      ToastHelper.showError(context, provider.errorMessage);
+    }
   }
 
   @override
@@ -101,9 +256,8 @@ class _SignupScreenState extends State<SignupScreen> {
               )
             : null,
         title: const Text(
-          'Vendor registration',
+          'Vendor Registration',
           style: TextStyle(
-            fontFamily: 'sans-serif',
             fontSize: 17,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -150,30 +304,53 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // ─── Step 1: Owner details ───────────────────────────────────────────────
-
+  // Step 1: Owner details
   Widget _buildStep1() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionCard(
-          title: 'Owner details',
+          title: 'Owner Details',
           children: [
             _Field(
               label: 'Full name',
-              controller: _nameController,
+              controller: _fullNameController,
               hint: 'As on ID proof',
+              required: true,
             ),
             _Field(
               label: 'Mobile number',
               controller: _mobileController,
-              hint: '+91 98765 43210',
+              hint: '10 digit mobile number',
               keyboardType: TextInputType.phone,
+              required: true,
             ),
             _Field(
-              label: 'ID proof number',
-              controller: _idProofController,
-              hint: 'Aadhaar / PAN / Passport',
+              label: 'Email address',
+              controller: _emailController,
+              hint: 'your@email.com',
+              keyboardType: TextInputType.emailAddress,
+              required: true,
+            ),
+            _Field(
+              label: 'Password',
+              controller: _passwordController,
+              hint: 'Minimum 6 characters',
+              obscureText: true,
+              required: true,
+            ),
+            _Field(
+              label: 'Confirm password',
+              controller: _confirmPasswordController,
+              hint: 'Re-enter password',
+              obscureText: true,
+              required: true,
+            ),
+            _Field(
+              label: 'Aadhar number',
+              controller: _aadharController,
+              hint: '12 digit Aadhar number (Optional)',
+              keyboardType: TextInputType.number,
             ),
           ],
         ),
@@ -181,10 +358,20 @@ class _SignupScreenState extends State<SignupScreen> {
         _PrimaryButton(
           label: 'Continue',
           onTap: () {
-            if (_nameController.text.isEmpty ||
+            if (_fullNameController.text.isEmpty ||
                 _mobileController.text.isEmpty ||
-                _idProofController.text.isEmpty) {
-              _showError('Please fill all owner details.');
+                _emailController.text.isEmpty ||
+                _passwordController.text.isEmpty ||
+                _confirmPasswordController.text.isEmpty) {
+              ToastHelper.showError(context, 'Please fill all required fields');
+              return;
+            }
+            if (_passwordController.text != _confirmPasswordController.text) {
+              ToastHelper.showError(context, 'Passwords do not match');
+              return;
+            }
+            if (_mobileController.text.length != 10) {
+              ToastHelper.showError(context, 'Please enter a valid 10-digit mobile number');
               return;
             }
             setState(() => _currentStep = 1);
@@ -194,52 +381,170 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // ─── Step 2: Vehicle details ─────────────────────────────────────────────
-
+  // Step 2: Car details
   Widget _buildStep2() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionCard(
-          title: 'Vehicle details',
+          title: 'Car Details',
           children: [
             _Field(
-              label: 'Car name / make',
+              label: 'Car name',
               controller: _carNameController,
-              hint: 'e.g. Maruti Swift',
+              hint: 'e.g. Maruti Swift, Honda City',
+              required: true,
             ),
             _Field(
-              label: 'Registration number',
-              controller: _regNumberController,
-              hint: 'KL 01 AB 1234',
-              textCapitalization: TextCapitalization.characters,
+              label: 'Model',
+              controller: _modelController,
+              hint: 'e.g. ZXI, VXI, V',
+              required: true,
             ),
             Row(
               children: [
                 Expanded(
-                  child: _DropdownField(
-                    label: 'Fuel type',
-                    value: _fuelType,
-                    items: _fuelOptions,
-                    onChanged: (v) => setState(() => _fuelType = v),
+                  child: _Field(
+                    label: 'Year',
+                    controller: _yearController,
+                    hint: '2023',
+                    keyboardType: TextInputType.number,
+                    required: true,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _DropdownField(
-                    label: 'Seating capacity',
-                    value: _seatCapacity,
-                    items: _seatOptions,
-                    onChanged: (v) => setState(() => _seatCapacity = v),
+                  child: _Field(
+                    label: 'Seats',
+                    controller: _seatsController,
+                    hint: '4, 5, 6, 7',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    label: 'Price per Hour (₹)',
+                    controller: _pricePerHourController,
+                    hint: '0',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Field(
+                    label: 'Price per Day (₹)',
+                    controller: _pricePerDayController,
+                    hint: '0',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    label: 'Delay per Hour (₹)',
+                    controller: _delayPerHourController,
+                    hint: '0',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Field(
+                    label: 'Delay per Day (₹)',
+                    controller: _delayPerDayController,
+                    hint: '0',
+                    keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
             _Field(
-              label: 'Model year',
-              controller: _modelYearController,
-              hint: '2021',
-              keyboardType: TextInputType.number,
+              label: 'Vehicle number',
+              controller: _vehicleNumberController,
+              hint: 'MH01AB1234',
+              textCapitalization: TextCapitalization.characters,
+              required: true,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    label: 'Fuel type',
+                    controller: _fuelController,
+                    hint: 'Petrol / Diesel / Electric',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Field(
+                    label: 'Transmission',
+                    controller: _carTypeController,
+                    hint: 'Manual / Automatic',
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    label: 'Car type',
+                    controller: _typeController,
+                    hint: 'Sedan / SUV / Hatchback',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Field(
+                    label: 'Location',
+                    controller: _locationController,
+                    hint: 'City name',
+                  ),
+                ),
+              ],
+            ),
+            _Field(
+              label: 'Description',
+              controller: _descriptionController,
+              hint: 'Comfortable city car with AC',
+              maxLines: 2,
+            ),
+            _Field(
+              label: 'Branch name',
+              controller: _branchNameController,
+              hint: 'e.g. Andheri Branch',
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: _Field(
+                    label: 'Branch Latitude',
+                    controller: _branchLatController,
+                    hint: '17.315289',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Field(
+                    label: 'Branch Longitude',
+                    controller: _branchLngController,
+                    hint: '78.561221',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            _PremiumToggle(
+              value: _isPremium,
+              onChanged: (val) => setState(() => _isPremium = val),
             ),
           ],
         ),
@@ -256,9 +561,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 label: 'Continue',
                 onTap: () {
                   if (_carNameController.text.isEmpty ||
-                      _regNumberController.text.isEmpty ||
-                      _fuelType == null) {
-                    _showError('Please fill all vehicle details.');
+                      _modelController.text.isEmpty ||
+                      _yearController.text.isEmpty ||
+                      _vehicleNumberController.text.isEmpty) {
+                    ToastHelper.showError(context, 'Please fill all required car details');
                     return;
                   }
                   setState(() => _currentStep = 2);
@@ -271,8 +577,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // ─── Step 3: Documents ───────────────────────────────────────────────────
-
+  // Step 3: Documents
   Widget _buildStep3(AuthProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,28 +609,53 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         const SizedBox(height: 12),
         _SectionCard(
-          title: 'Vehicle documents',
+          title: 'Car Images',
           children: [
             _UploadTile(
-              label: 'RC Book / Registration Certificate',
-              file: _rcFile,
-              onTap: () => _pickFile(true),
+              label: 'Car Photos',
+              files: _carImages,
+              onTap: _pickCarImages,
+              onRemove: _removeCarImage,
+              isImage: true,
             ),
-            const SizedBox(height: 10),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _SectionCard(
+          title: 'Documents',
+          children: [
             _UploadTile(
-              label: 'Insurance certificate',
-              file: _insuranceFile,
-              onTap: () => _pickFile(false),
+              label: 'RC Book / Insurance',
+              files: _carDocs,
+              onTap: _pickCarDocs,
+              onRemove: _removeCarDoc,
+              isImage: false,
             ),
           ],
         ),
         const SizedBox(height: 16),
-        if (provider.statusMessage.isNotEmpty)
+        if (provider.errorMessage.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              provider.statusMessage,
-              style: const TextStyle(fontSize: 13, color: Colors.redAccent),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      provider.errorMessage,
+                      style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         Row(
@@ -337,17 +667,22 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: provider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: _brand,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    )
                   : _PrimaryButton(
-                      label: 'Submit registration',
-                      onTap: () {
-                        if (_rcFile == null) {
-                          _showError('Please upload the RC book.');
-                          return;
-                        }
-                        _submit();
-                        setState(() => _currentStep = 3);
-                      },
+                      label: 'Submit Registration',
+                      onTap: _submitRegistration,
                     ),
             ),
           ],
@@ -356,8 +691,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // ─── Step 4: Success ─────────────────────────────────────────────────────
-
+  // Step 4: Success
   Widget _buildSuccess() {
     return _SectionCard(
       title: '',
@@ -377,7 +711,7 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 16),
         const Center(
           child: Text(
-            'Registration submitted',
+            'Registration Submitted!',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
@@ -389,23 +723,20 @@ class _SignupScreenState extends State<SignupScreen> {
             style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.6),
           ),
         ),
+        const SizedBox(height: 24),
+        _PrimaryButton(
+          label: 'Go to Login',
+          onTap: () {
+            Navigator.pop(context);
+          },
+        ),
         const SizedBox(height: 16),
       ],
     );
   }
-
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.black87,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }
 
-// ─── Step bar ─────────────────────────────────────────────────────────────────
+// ─── Step Bar Widget ─────────────────────────────────────────────────────────
 
 class _StepBar extends StatelessWidget {
   final int currentStep;
@@ -420,13 +751,18 @@ class _StepBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['Owner', 'Vehicle', 'Documents'];
+    final labels = ['Owner', 'Car', 'Documents'];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: List.generate(labels.length * 2 - 1, (i) {
           if (i.isOdd) {
-            return Expanded(child: Container(height: 1, color: Colors.black12));
+            return Expanded(
+              child: Container(
+                height: 1,
+                color: Colors.black12,
+              ),
+            );
           }
           final idx = i ~/ 2;
           final isDone = idx < currentStep;
@@ -461,7 +797,7 @@ class _StepBar extends StatelessWidget {
                       : Text(
                           '${idx + 1}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
                             color: isActive ? brandDark : Colors.black45,
                           ),
@@ -472,7 +808,7 @@ class _StepBar extends StatelessWidget {
               Text(
                 labels[idx],
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: isActive || isDone ? Colors.black87 : Colors.black45,
                 ),
@@ -485,13 +821,16 @@ class _StepBar extends StatelessWidget {
   }
 }
 
-// ─── Section card ─────────────────────────────────────────────────────────────
+// ─── Section Card Widget ─────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _SectionCard({required this.title, required this.children});
+  const _SectionCard({
+    required this.title,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -524,7 +863,7 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ─── Text field ───────────────────────────────────────────────────────────────
+// ─── Text Field Widget ───────────────────────────────────────────────────────
 
 class _Field extends StatelessWidget {
   final String label;
@@ -532,6 +871,9 @@ class _Field extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
+  final bool obscureText;
+  final bool required;
+  final int maxLines;
 
   const _Field({
     required this.label,
@@ -539,6 +881,9 @@ class _Field extends StatelessWidget {
     this.hint = '',
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.words,
+    this.obscureText = false,
+    this.required = false,
+    this.maxLines = 1,
   });
 
   @override
@@ -548,19 +893,35 @@ class _Field extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black54,
-            ),
+          Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
+                ),
+              ),
+              if (required) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '*',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.red.shade400,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 5),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
             textCapitalization: textCapitalization,
+            obscureText: obscureText,
+            maxLines: maxLines,
             style: const TextStyle(fontSize: 14, color: Colors.black87),
             decoration: InputDecoration(
               hintText: hint,
@@ -594,217 +955,251 @@ class _Field extends StatelessWidget {
   }
 }
 
-// ─── Dropdown field ───────────────────────────────────────────────────────────
+// ─── Premium Toggle Widget ───────────────────────────────────────────────────
 
-class _DropdownField extends StatelessWidget {
-  final String label;
-  final String? value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
+class _PremiumToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
-  const _DropdownField({
-    required this.label,
+  const _PremiumToggle({
     required this.value,
-    required this.items,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
+          const Text(
+            'Premium Listing',
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: Colors.black54,
             ),
           ),
-          const SizedBox(height: 5),
-          DropdownButtonFormField<String>(
-            value: value,
-            hint: const Text(
-              'Select',
-              style: TextStyle(fontSize: 14, color: Colors.black26),
+          const SizedBox(width: 12),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: const Color(0xFF1D9E75),
+              activeTrackColor: const Color(0xFF1D9E75).withOpacity(0.3),
             ),
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-            icon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 18,
-              color: Colors.black45,
-            ),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
+          ),
+          const Spacer(),
+          if (value)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1D9E75).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              filled: true,
-              fillColor: const Color(0xFFF7F7F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.black12, width: 0.5),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.black12, width: 0.5),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
+              child: const Text(
+                'Featured',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
                   color: Color(0xFF1D9E75),
-                  width: 1.5,
                 ),
               ),
             ),
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: onChanged,
-          ),
         ],
       ),
     );
   }
 }
 
-// ─── Upload tile ──────────────────────────────────────────────────────────────
+// ─── Upload Tile Widget ──────────────────────────────────────────────────────
 
 class _UploadTile extends StatelessWidget {
   final String label;
-  final PlatformFile? file;
+  final List<File> files;
   final VoidCallback onTap;
+  final Function(int)? onRemove;
+  final bool isImage;
 
   const _UploadTile({
     required this.label,
-    required this.file,
+    required this.files,
     required this.onTap,
+    this.onRemove,
+    this.isImage = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasFile = file != null;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: hasFile ? const Color(0xFFE1F5EE) : const Color(0xFFF7F7F5),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: hasFile
-                ? const Color(0xFF1D9E75).withOpacity(0.4)
-                : Colors.black12,
-            width: hasFile ? 1.0 : 0.5,
+    final hasFiles = files.isNotEmpty;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: hasFiles ? const Color(0xFFE1F5EE) : const Color(0xFFF7F7F5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: hasFiles
+                    ? const Color(0xFF1D9E75).withOpacity(0.4)
+                    : Colors.black12,
+                width: hasFiles ? 1.0 : 0.5,
+              ),
+            ),
+            child: hasFiles
+                ? Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1D9E75).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: Color(0xFF0F6E56),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF0F6E56),
+                              ),
+                            ),
+                            Text(
+                              '${files.length} file(s) selected',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF1D9E75),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.edit_outlined,
+                        size: 14,
+                        color: Color(0xFF1D9E75),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black12, width: 0.5),
+                        ),
+                        child: Icon(
+                          isImage ? Icons.add_photo_alternate_outlined : Icons.upload_file_outlined,
+                          size: 16,
+                          color: Colors.black45,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isImage ? 'Tap to upload images' : 'Tap to upload documents',
+                              style: const TextStyle(fontSize: 11, color: Colors.black38),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: Colors.black26,
+                      ),
+                    ],
+                  ),
           ),
         ),
-        child: hasFile
-            ? Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1D9E75).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
+        if (hasFiles && onRemove != null) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(files.length, (index) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isImage ? Icons.image_outlined : Icons.description_outlined,
+                      size: 12,
+                      color: Colors.grey.shade600,
                     ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      size: 16,
-                      color: Color(0xFF0F6E56),
+                    const SizedBox(width: 4),
+                    Text(
+                      'File ${index + 1}',
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF0F6E56),
-                          ),
-                        ),
-                        Text(
-                          file!.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF1D9E75),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => onRemove?.call(index),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
-                  ),
-                  const Icon(
-                    Icons.edit_outlined,
-                    size: 14,
-                    color: Color(0xFF1D9E75),
-                  ),
-                ],
-              )
-            : Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black12, width: 0.5),
-                    ),
-                    child: const Icon(
-                      Icons.upload_file_outlined,
-                      size: 16,
-                      color: Colors.black45,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Tap to upload  •  PDF, JPG, PNG',
-                          style: TextStyle(fontSize: 11, color: Colors.black38),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: Colors.black26,
-                  ),
-                ],
-              ),
-      ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
     );
   }
 }
 
-// ─── Buttons ──────────────────────────────────────────────────────────────────
+// ─── Buttons ─────────────────────────────────────────────────────────────────
 
 class _PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _PrimaryButton({required this.label, required this.onTap});
+  const _PrimaryButton({
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -834,7 +1229,10 @@ class _SecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _SecondaryButton({required this.label, required this.onTap});
+  const _SecondaryButton({
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
