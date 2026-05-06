@@ -113,7 +113,7 @@ class _MainShellState extends State<MainShell> {
       activeIcon: Icons.receipt_long_rounded,
     ),
     _NavItem(
-      label: 'Profile',
+      label: 'Account',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
     ),
@@ -141,140 +141,6 @@ class _MainShellState extends State<MainShell> {
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
         backgroundColor: bgColor,
-        // ── Custom app bar ───────────────────────────────────────────────
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(70),
-          child: SafeArea(
-            child: Container(
-              height: 70,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: bgColor,
-                border: Border(
-                  bottom: BorderSide(color: borderColor, width: 0.5),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Brand logo tile
-                  SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/ic_launcher.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // Brand name + greeting
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Varahi',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: _brand,
-                          letterSpacing: -0.4,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _greeting,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textMuted,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const Spacer(),
-
-                  // Dark / light mode toggle
-                  // ValueListenableBuilder<ThemeMode>(
-                  //   valueListenable: themeNotifier,
-                  //   builder: (_, mode, __) {
-                  //     final dark = mode == ThemeMode.dark;
-                  //     return GestureDetector(
-                  //       onTap: () {
-                  //         themeNotifier.toggle();
-                  //       },
-                  //       child: AnimatedContainer(
-                  //         duration: const Duration(milliseconds: 250),
-                  //         width: 56,
-                  //         height: 30,
-                  //         padding: const EdgeInsets.all(3),
-                  //         decoration: BoxDecoration(
-                  //           color: dark
-                  //               ? const Color(0xFF2A2A28)
-                  //               : const Color(0xFFEAEAE6),
-                  //           borderRadius: BorderRadius.circular(20),
-                  //           border: Border.all(
-                  //             color: dark
-                  //                 ? Colors.white.withOpacity(0.1)
-                  //                 : Colors.black.withOpacity(0.1),
-                  //             width: 0.5,
-                  //           ),
-                  //         ),
-                  //         child: Stack(
-                  //           children: [
-                  //             AnimatedAlign(
-                  //               duration: const Duration(milliseconds: 250),
-                  //               curve: Curves.easeInOut,
-                  //               alignment: dark
-                  //                   ? Alignment.centerRight
-                  //                   : Alignment.centerLeft,
-                  //               child: Container(
-                  //                 width: 24,
-                  //                 height: 24,
-                  //                 decoration: BoxDecoration(
-                  //                   color: dark
-                  //                       ? const Color(0xFF3A3A38)
-                  //                       : Colors.white,
-                  //                   shape: BoxShape.circle,
-                  //                   boxShadow: [
-                  //                     BoxShadow(
-                  //                       color: Colors.black.withOpacity(0.12),
-                  //                       blurRadius: 4,
-                  //                       offset: const Offset(0, 1),
-                  //                     ),
-                  //                   ],
-                  //                 ),
-                  //                 child: Icon(
-                  //                   dark
-                  //                       ? Icons.nightlight_round
-                  //                       : Icons.wb_sunny_rounded,
-                  //                   size: 13,
-                  //                   color: dark
-                  //                       ? const Color(0xFFBBBBBB)
-                  //                       : const Color(0xFFE8A020),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
-                  const SizedBox(width: 10),
-
-                  // Notification bell
-                ],
-              ),
-            ),
-          ),
-        ),
 
         // ── Body ─────────────────────────────────────────────────────────
         body: IndexedStack(index: _currentIndex, children: _screens),

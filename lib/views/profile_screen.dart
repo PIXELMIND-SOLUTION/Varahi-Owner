@@ -3,6 +3,9 @@
 // ═════════════════════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:varahiowner/helpers/shared_pref_helper.dart';
+import 'package:varahiowner/helpers/toast_helper.dart';
 import 'package:varahiowner/views/aboutus_screen.dart';
 import 'package:varahiowner/views/login_screen.dart';
 import 'package:varahiowner/views/my_cars_screen.dart';
@@ -16,8 +19,26 @@ const _brand = Color(0xFF1D9E75);
 const _brandLight = Color(0xFFE1F5EE);
 const _brandDark = Color(0xFF0F6E56);
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ToastHelper.showError(context, 'Could not launch URL');
+      }
+    } catch (e) {
+      ToastHelper.showError(context, 'Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +52,16 @@ class ProfileScreen extends StatelessWidget {
     final textMuted = isDark ? Colors.white54 : Colors.black45;
 
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'Account',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
       backgroundColor: bgColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -94,12 +125,7 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'App version & company info',
                   textPrimary: textPrimary,
                   textMuted: textMuted,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AboutUsScreen()),
-                    );
-                  },
+                  onTap: () => _launchURL('https://varahiselfdrivecars.com/'),
                 ),
                 _MenuItem(
                   icon: Icons.privacy_tip_outlined,
@@ -109,7 +135,9 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'How we handle your data',
                   textPrimary: textPrimary,
                   textMuted: textMuted,
-                  onTap: () {},
+                  onTap: () => _launchURL(
+                    'https://varahiselfdrivecars.com/owner/privacy-policy',
+                  ),
                   showDivider: true,
                 ),
                 _MenuItem(
@@ -120,7 +148,9 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'Usage rules & agreements',
                   textPrimary: textPrimary,
                   textMuted: textMuted,
-                  onTap: () {},
+                  onTap: () => _launchURL(
+                    'https://varahiselfdrivecars.com/owner/terms-conditions',
+                  ),
                 ),
               ],
             ),
@@ -140,7 +170,9 @@ class ProfileScreen extends StatelessWidget {
                   subtitle: 'Contact us or raise an issue',
                   textPrimary: textPrimary,
                   textMuted: textMuted,
-                  onTap: () {},
+                  onTap: () => _launchURL(
+                    'https://varahiselfdrivecars.com/owner/support',
+                  ),
                 ),
               ],
             ),
@@ -149,7 +181,9 @@ class ProfileScreen extends StatelessWidget {
 
             // ── Logout ───────────────────────────────────────────────────
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                await SharedPrefHelper.logout();
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => LoginScreen()),

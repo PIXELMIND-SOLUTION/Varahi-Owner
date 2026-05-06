@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:varahiowner/helpers/shared_pref_helper.dart'; // Add this import
+import 'package:varahiowner/providers/BannerProvider/banner_provider.dart';
+import 'package:varahiowner/providers/Staff/providers/booking_provider.dart';
+import 'package:varahiowner/providers/Staff/providers/home_booking_provider.dart';
+import 'package:varahiowner/providers/Staff/providers/single_booking_provider.dart';
+import 'package:varahiowner/providers/Staff/providers/user_provider.dart';
 import 'package:varahiowner/providers/auth_provider.dart';
 import 'package:varahiowner/providers/booking_provider.dart';
 import 'package:varahiowner/providers/car_provider.dart';
+import 'package:varahiowner/providers/owner_provider.dart';
 import 'package:varahiowner/views/login_screen.dart';
 import 'package:varahiowner/views/splash_screen.dart';
 
@@ -19,11 +25,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => CarProvider()),
-                      ChangeNotifierProvider(create: (_) => BookingProvider()),
-
-
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CarProvider()),
+        ChangeNotifierProvider(create: (_) => MainBookingProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => SingleBookingProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => HomeBookingProvider()),
+        ChangeNotifierProvider(create: (_) => OwnerProvider()),
+        ChangeNotifierProvider(create: (_) => BannerProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

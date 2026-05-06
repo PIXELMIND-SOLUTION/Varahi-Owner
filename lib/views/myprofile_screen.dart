@@ -1,15 +1,16 @@
 // ═════════════════════════════════════════════════════════════════════════════
-// MyProfileScreen  –  editable name, phone & profile image
+// MyProfileScreen  –  editable name only
 // ═════════════════════════════════════════════════════════════════════════════
-
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart'; // add image_picker to pubspec
+import 'package:provider/provider.dart';
+import 'package:varahiowner/helpers/shared_pref_helper.dart';
+import 'package:varahiowner/model/Profile/owner_model.dart';
+import '../providers/owner_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared brand tokens (keep in sync with ProfileScreen)
+// Shared brand tokens
 // ─────────────────────────────────────────────────────────────────────────────
 
 const _brand = Color(0xFF1D9E75);
@@ -29,99 +30,130 @@ class MyProfileScreen extends StatefulWidget {
 
 class _MyProfileScreenState extends State<MyProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameCtrl = TextEditingController();
 
-  // Controllers pre-filled with dummy data
-  late final TextEditingController _nameCtrl = TextEditingController(
-    text: 'Varahi Owner',
-  );
-  late final TextEditingController _phoneCtrl = TextEditingController(
-    text: '1234567890',
-  );
-
-  File? _pickedImage; // null  → show initials avatar
+  bool _isLoading = true;
   bool _saving = false;
+  String? _errorMessage;
+  Owner? _owner;
 
-  // ── Image picker ──────────────────────────────────────────────────────────
+  @override
+  void initState() {
+    super.initState();
+    _loadOwnerProfile();
+  }
 
-  Future<void> _pickImage() async {
-    final source = await _showImageSourceSheet();
-    if (source == null) return;
+  // ── Load profile from API ────────────────────────────────────────────────
 
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 80,
-    );
-    if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+  Future<void> _loadOwnerProfile() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final ownerId = SharedPrefHelper.getOwnerId();
+      if (ownerId == null) {
+        return;
+      }
+      final ownerProvider = Provider.of<OwnerProvider>(context, listen: false);
+      final success = await ownerProvider.fetchOwnerProfile(ownerId);
+
+      if (success && mounted) {
+        setState(() {
+          _owner = ownerProvider.owner;
+          _nameCtrl.text = _owner?.fullName ?? '';
+          _isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _errorMessage =
+              ownerProvider.errorMessage ?? 'Failed to load profile';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error loading profile: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Future<ImageSource?> _showImageSourceSheet() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: isDark ? const Color(0xFF1C1C1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Choose photo',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _SheetOption(
-                icon: Icons.camera_alt_outlined,
-                label: 'Camera',
-                isDark: isDark,
-                onTap: () => Navigator.pop(context, ImageSource.camera),
-              ),
-              const SizedBox(height: 10),
-              _SheetOption(
-                icon: Icons.photo_library_outlined,
-                label: 'Gallery',
-                isDark: isDark,
-                onTap: () => Navigator.pop(context, ImageSource.gallery),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── Save name only ──────────────────────────────────────────────────────
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _saving = true);
 
-    // TODO: hook up your actual API / state management here
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      final ownerId = SharedPrefHelper.getOwnerId();
+      if (ownerId == null) {
+        return;
+      }
+      final ownerProvider = Provider.of<OwnerProvider>(context, listen: false);
+      final success = await ownerProvider.updateOwnerProfile(
+        ownerId: ownerId,
+        fullName: _nameCtrl.text.trim(),
+      );
 
-    if (!mounted) return;
-    setState(() => _saving = false);
+      if (!mounted) return;
+      setState(() => _saving = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Profile updated successfully'),
-        backgroundColor: _brand,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+      if (success) {
+        // Update local owner object
+        setState(() {
+          _owner = ownerProvider.owner;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Name updated successfully'),
+            backgroundColor: _brand,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+
+        // Optional: Navigate back after successful update
+        // Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ownerProvider.errorMessage ?? 'Failed to update name',
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -129,7 +161,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -175,231 +206,230 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Avatar ─────────────────────────────────────────────────
-              Center(
-                child: Stack(
-                  children: [
-                    // Photo / initials circle
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _brandLight,
-                        border: Border.all(
-                          color: _brand.withOpacity(0.25),
-                          width: 2.5,
-                        ),
-                      ),
-                      clipBehavior: Clip.hardEdge,
-                      child: _pickedImage != null
-                          ? Image.file(_pickedImage!, fit: BoxFit.cover)
-                          : const Center(
-                              child: Text(
-                                'V',
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w700,
-                                  color: _brandDark,
-                                ),
-                              ),
-                            ),
-                    ),
-
-                    // Camera badge
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: _brand,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: bgColor, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Colors.red.withOpacity(0.7),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(color: textMuted, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _loadOwnerProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _brand,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ],
-                ),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 6),
-              Center(
-                child: Text(
-                  'Tap the camera icon to change photo',
-                  style: TextStyle(fontSize: 12, color: textMuted),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Field card ─────────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+              child: Form(
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _FieldLabel(label: 'Full name', textMuted: textMuted),
-                    const SizedBox(height: 8),
-                    _ProfileField(
-                      controller: _nameCtrl,
-                      hint: 'Enter your full name',
-                      icon: Icons.person_outline_rounded,
-                      fillColor: inputFill,
-                      borderColor: borderColor,
-                      textPrimary: textPrimary,
-                      textMuted: textMuted,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
-                        LengthLimitingTextInputFormatter(50),
-                      ],
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Name is required';
-                        }
-                        if (v.trim().length < 2) {
-                          return 'Name is too short';
-                        }
-                        return null;
-                      },
+                    // Display readonly info card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _brandLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _brand.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.email_outlined,
+                                size: 16,
+                                color: _brandDark,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Email',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _brandDark.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _owner?.email ?? 'N/A',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _brandDark,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 16,
+                                color: _brandDark,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Mobile Number',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _brandDark.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _owner?.mobileNumber ?? 'N/A',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _brandDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Editable name field
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _FieldLabel(label: 'Full name', textMuted: textMuted),
+                          const SizedBox(height: 8),
+                          _ProfileField(
+                            controller: _nameCtrl,
+                            hint: 'Enter your full name',
+                            icon: Icons.person_outline_rounded,
+                            fillColor: inputFill,
+                            borderColor: borderColor,
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z ]'),
+                              ),
+                              LengthLimitingTextInputFormatter(50),
+                            ],
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Name is required';
+                              }
+                              if (v.trim().length < 2) {
+                                return 'Name is too short';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 20),
 
-                    _FieldLabel(label: 'Mobile number', textMuted: textMuted),
-                    const SizedBox(height: 8),
-                    _ProfileField(
-                      controller: _phoneCtrl,
-                      hint: 'Enter mobile number',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      fillColor: inputFill,
-                      borderColor: borderColor,
-                      textPrimary: textPrimary,
-                      textMuted: textMuted,
-                      prefix: Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Text(
-                          '+91',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
+                    // Info banner
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _brandLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _brand.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: _brandDark,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Your name is used to identify you in the Varahi Owner platform. '
+                              'Email and phone number cannot be changed from here.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _brandDark.withOpacity(0.85),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _saving ? null : _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _brand,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: _brand.withOpacity(0.6),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Mobile number is required';
-                        }
-                        if (v.length != 10) {
-                          return 'Enter a valid 10-digit number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── Notice banner ──────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: _brandLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _brand.withOpacity(0.2)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      size: 16,
-                      color: _brandDark,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Your name and phone number are used to identify you '
-                        'in the Varahi Owner platform. Keep them accurate.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _brandDark.withOpacity(0.85),
-                          height: 1.5,
-                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Save changes',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 28),
-
-              // ── Save button ────────────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _brand,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: _brand.withOpacity(0.6),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Save changes',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
@@ -411,6 +441,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 class _FieldLabel extends StatelessWidget {
   final String label;
   final Color textMuted;
+
   const _FieldLabel({required this.label, required this.textMuted});
 
   @override
@@ -432,10 +463,12 @@ class _ProfileField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final TextInputType keyboardType;
-  final Color fillColor, borderColor, textPrimary, textMuted;
+  final Color fillColor;
+  final Color borderColor;
+  final Color textPrimary;
+  final Color textMuted;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
-  final Widget? prefix;
 
   const _ProfileField({
     required this.controller,
@@ -448,7 +481,6 @@ class _ProfileField extends StatelessWidget {
     required this.textMuted,
     this.inputFormatters,
     this.validator,
-    this.prefix,
   });
 
   @override
@@ -468,20 +500,7 @@ class _ProfileField extends StatelessWidget {
         hintStyle: TextStyle(fontSize: 14, color: textMuted),
         filled: true,
         fillColor: fillColor,
-        prefixIcon: prefix == null
-            ? Icon(icon, size: 18, color: textMuted)
-            : null,
-        prefix: prefix != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(width: 14),
-                  Icon(icon, size: 18, color: textMuted),
-                  const SizedBox(width: 10),
-                  prefix!,
-                ],
-              )
-            : null,
+        prefixIcon: Icon(icon, size: 18, color: textMuted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
@@ -505,50 +524,6 @@ class _ProfileField extends StatelessWidget {
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _SheetOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _SheetOption({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = isDark ? const Color(0xFF242422) : const Color(0xFFF7F7F5);
-    final fg = isDark ? Colors.white : Colors.black87;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: _brand),
-            const SizedBox(width: 14),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: fg,
-              ),
-            ),
-          ],
         ),
       ),
     );
