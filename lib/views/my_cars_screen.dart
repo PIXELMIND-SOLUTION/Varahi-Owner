@@ -44,9 +44,13 @@ class _MyCarsScreenState extends State<MyCarsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111110) : const Color(0xFFF7F7F5),
+      backgroundColor: isDark
+          ? const Color(0xFF111110)
+          : const Color(0xFFF7F7F5),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF111110) : const Color(0xFFF7F7F5),
+        backgroundColor: isDark
+            ? const Color(0xFF111110)
+            : const Color(0xFFF7F7F5),
         elevation: 0,
         title: const Text(
           'My Vehicles',
@@ -56,8 +60,10 @@ class _MyCarsScreenState extends State<MyCarsScreen> {
         actions: [
           // Add car button in app bar
           IconButton(
-            icon: Icon(Icons.add_circle_outline, 
-              color: isDark ? Colors.white : const Color(0xFF1D9E75)),
+            icon: Icon(
+              Icons.add_circle_outline,
+              color: isDark ? Colors.white : const Color(0xFF1D9E75),
+            ),
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -74,32 +80,32 @@ class _MyCarsScreenState extends State<MyCarsScreen> {
       body: provider.isLoading && _isFirstLoad
           ? const Center(child: CircularProgressIndicator())
           : provider.myCars.isEmpty
-              ? _buildEmptyState(isDark, context)
-              : RefreshIndicator(
-                  onRefresh: _onRefresh,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: provider.myCars.length,
-                    itemBuilder: (context, index) {
-                      final car = provider.myCars[index];
-                      return _CarCard(
-                        car: car,
-                        isDark: isDark,
-                        onTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EditCarScreen(carId: car.id!),
-                            ),
-                          );
-                          if (result == true) {
-                            _loadCars();
-                          }
-                        },
+          ? _buildEmptyState(isDark, context)
+          : RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: provider.myCars.length,
+                itemBuilder: (context, index) {
+                  final car = provider.myCars[index];
+                  return _CarCard(
+                    car: car,
+                    isDark: isDark,
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditCarScreen(carId: car.id!),
+                        ),
                       );
+                      if (result == true) {
+                        _loadCars();
+                      }
                     },
-                  ),
-                ),
+                  );
+                },
+              ),
+            ),
       // Floating action button for add car
       floatingActionButton: provider.myCars.isNotEmpty
           ? FloatingActionButton.extended(
@@ -192,7 +198,7 @@ class _CarCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor = isDark ? const Color(0xFF1C1C1A) : Colors.white;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -213,7 +219,9 @@ class _CarCard extends StatelessWidget {
           children: [
             // Car Image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: car.carImage.isNotEmpty
                   ? Image.network(
                       car.carImage.first,
@@ -257,7 +265,9 @@ class _CarCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(car.runningStatus).withOpacity(0.1),
+                          color: _getStatusColor(
+                            car.runningStatus,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -274,27 +284,57 @@ class _CarCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.local_gas_station_outlined,
-                          size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                      Icon(
+                        Icons.local_gas_station_outlined,
+                        size: 14,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
                       const SizedBox(width: 4),
-                      Text(car.fuel, style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54)),
+                      Text(
+                        car.fuel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Icon(Icons.event_seat_outlined,
-                          size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                      Icon(
+                        Icons.event_seat_outlined,
+                        size: 14,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
                       const SizedBox(width: 4),
-                      Text('${car.seats} seats', style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54)),
+                      Text(
+                        '${car.seats} seats',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Icon(Icons.speed_outlined,
-                          size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                      Icon(
+                        Icons.speed_outlined,
+                        size: 14,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
                       const SizedBox(width: 4),
-                      Text(car.carType, style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.black54)),
+                      Text(
+                        car.carType,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.tag_outlined,
-                          size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                      Icon(
+                        Icons.tag_outlined,
+                        size: 14,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -312,36 +352,50 @@ class _CarCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Price per day',
-                              style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.black38)),
-                          Text('₹${car.pricePerDay}',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1D9E75))),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Price per hour',
-                              style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.black38)),
-                          Text('₹${car.pricePerHour}',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1D9E75))),
-                        ],
-                      ),
+                      // Column(
+                      //   crossAxisAlignment: CrossAxisAlignment.start,
+                      //   children: [
+                      //     Text('Price per day',
+                      //         style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.black38)),
+                      //     Text('₹${car.pricePerDay}',
+                      //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1D9E75))),
+                      //   ],
+                      // ),
+                      // Column(
+                      //   crossAxisAlignment: CrossAxisAlignment.start,
+                      //   children: [
+                      //     Text('Price per hour',
+                      //         style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.black38)),
+                      //     Text('₹${car.pricePerHour}',
+                      //         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1D9E75))),
+                      //   ],
+                      // ),
                       if (car.isPremium)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1D9E75).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.star, size: 12, color: Color(0xFF1D9E75)),
+                              Icon(
+                                Icons.star,
+                                size: 12,
+                                color: Color(0xFF1D9E75),
+                              ),
                               SizedBox(width: 4),
-                              Text('Premium', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF1D9E75))),
+                              Text(
+                                'Premium',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1D9E75),
+                                ),
+                              ),
                             ],
                           ),
                         ),

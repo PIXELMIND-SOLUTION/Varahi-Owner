@@ -4534,7 +4534,7 @@ class _BookingCardCompact extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '₹${booking.totalPrice.toStringAsFixed(0)}',
+                        '₹${booking.totalPrice}',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -4860,7 +4860,7 @@ class _BookingDetailSheet extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '₹${booking.totalPrice.toStringAsFixed(0)}',
+                              '₹${booking.totalPrice}',
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,

@@ -2,7 +2,10 @@
 // ProfileScreen
 // ═════════════════════════════════════════════════════════════════════════════
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:varahiowner/helpers/shared_pref_helper.dart';
 import 'package:varahiowner/helpers/toast_helper.dart';
@@ -37,6 +40,144 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       ToastHelper.showError(context, 'Error: $e');
+    }
+  }
+
+  Future<void> _showDeleteAccountDialog() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Delete Account',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Are you sure you want to delete your account?',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '⚠️ This action is irreversible and will permanently delete all your data including:',
+                style: TextStyle(fontSize: 13, color: Colors.red[700]),
+              ),
+              const SizedBox(height: 8),
+              const Text('• All car listings'),
+              const Text('• Booking history'),
+              const Text('• Account information'),
+              const SizedBox(height: 12),
+              Text(
+                'Type "DELETE" to confirm:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter DELETE',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ),
+                controller: TextEditingController(),
+                onChanged: (value) {},
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteAccount();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Get ownerId from SharedPrefHelper
+      String? ownerId = await SharedPrefHelper.getOwnerId();
+
+      if (ownerId == null) {
+        throw Exception('Owner ID not found');
+      }
+
+      // Make API call
+      final response = await http.delete(
+        Uri.parse(
+          'https://varahibackend.varahiselfdrivecars.com/api/owner/delete-account/$ownerId',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      // Check response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Logout and navigate to login
+        await SharedPrefHelper.logout();
+
+        if (context.mounted) {
+          ToastHelper.showSuccess(context, 'Account deleted successfully');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        }
+      } else {
+        // Handle error
+        final responseData = json.decode(response.body);
+        final errorMessage =
+            responseData['message'] ?? 'Failed to delete account';
+
+        if (context.mounted) {
+          ToastHelper.showError(context, errorMessage);
+        }
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (context.mounted) {
+        Navigator.pop(context);
+        ToastHelper.showError(context, 'Error: $e');
+      }
     }
   }
 
@@ -173,6 +314,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () => _launchURL(
                     'https://varahiselfdrivecars.com/owner/support',
                   ),
+                ),
+              ],
+            ),
+
+            _SectionLabel(label: '', textMuted: textMuted),
+            const SizedBox(height: 8),
+            _MenuGroup(
+              cardColor: cardColor,
+              borderColor: borderColor,
+              items: [
+                // ➕ ADD THIS NEW MENU ITEM:
+                _MenuItem(
+                  icon: Icons.delete_outline_rounded,
+                  iconColor: Colors.red,
+                  iconBg: const Color(0xFFFCEBEB),
+                  label: 'Delete account',
+                  subtitle: 'Permanently delete your account',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  onTap: _showDeleteAccountDialog,
                 ),
               ],
             ),

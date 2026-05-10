@@ -6,38 +6,38 @@ import 'package:varahiowner/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   bool _isLoading = false;
   bool _isLoggedIn = false;
   String _errorMessage = '';
   OwnerModel? _currentOwner;
-  
+
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String get errorMessage => _errorMessage;
   OwnerModel? get currentOwner => _currentOwner;
-  
+
   AuthProvider() {
     _checkLoginStatus();
   }
-  
+
   Future<void> _checkLoginStatus() async {
     _isLoggedIn = await _authService.isLoggedIn();
     notifyListeners();
   }
-  
+
   Future<bool> login(String mobileNumber, String password) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
-              print("ooooooooooo$mobileNumber");
-                                    print("ooooooooooo$password");
-    
+    print("ooooooooooo$mobileNumber");
+    print("ooooooooooo$password");
+
     final result = await _authService.login(mobileNumber, password);
-    
+
     _isLoading = false;
-    
+
     if (result['success'] == true) {
       _isLoggedIn = true;
       _currentOwner = OwnerModel.fromJson(result['data']);
@@ -49,7 +49,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<bool> registerWithCar({
     required OwnerModel owner,
     required CarModel car,
@@ -59,19 +59,18 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
-    
+
     final result = await _authService.registerWithCar(
       owner: owner,
       car: car,
       carImages: carImages,
       carDocs: carDocs,
     );
-    
+
     _isLoading = false;
-    
+
     if (result['success'] == true) {
       _isLoggedIn = true;
-      _currentOwner = OwnerModel.fromJson(result['data']);
       notifyListeners();
       return true;
     } else {
@@ -80,7 +79,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<void> logout() async {
     await _authService.logout();
     _isLoggedIn = false;
@@ -88,7 +87,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
   }
-  
+
   void clearError() {
     _errorMessage = '';
     notifyListeners();

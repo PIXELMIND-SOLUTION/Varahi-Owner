@@ -18,7 +18,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
   bool _isGettingLocation = false;
-  
+
   // Controllers for Car Details
   final _carNameCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
@@ -37,18 +37,30 @@ class _AddCarScreenState extends State<AddCarScreen> {
   final _branchNameCtrl = TextEditingController();
   final _branchLatCtrl = TextEditingController();
   final _branchLngCtrl = TextEditingController();
-  
+
   bool _isPremium = false;
   List<File> _carImages = [];
   List<File> _carDocs = [];
-  
+
   // Dropdown options
-  final List<String> _fuelTypes = ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'];
-  final List<String> _carTypes = ['Sedan', 'SUV', 'Hatchback', 'Van', 'Mini Bus'];
+  final List<String> _fuelTypes = [
+    'Petrol',
+    'Diesel',
+    'CNG',
+    'Electric',
+    'Hybrid',
+  ];
+  final List<String> _carTypes = [
+    'Sedan',
+    'SUV',
+    'Hatchback',
+    'Van',
+    'Mini Bus',
+  ];
   final List<String> _transmissions = ['Manual', 'Automatic'];
-  
+
   final Location _location = Location();
-  
+
   Future<void> _pickImages(bool isCarImage) async {
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage();
@@ -63,7 +75,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       ToastHelper.showSuccess(context, '${picked.length} file(s) selected');
     }
   }
-  
+
   void _removeImage(int index, bool isCarImage) {
     setState(() {
       if (isCarImage) {
@@ -73,51 +85,60 @@ class _AddCarScreenState extends State<AddCarScreen> {
       }
     });
   }
-  
+
   Future<void> _getCurrentLocation() async {
     setState(() {
       _isGettingLocation = true;
     });
-    
+
     try {
       // Check if location service is enabled
       bool serviceEnabled = await _location.serviceEnabled();
       if (!serviceEnabled) {
         serviceEnabled = await _location.requestService();
         if (!serviceEnabled) {
-          ToastHelper.showError(context, 'Location service is disabled. Please enable it.');
+          ToastHelper.showError(
+            context,
+            'Location service is disabled. Please enable it.',
+          );
           setState(() {
             _isGettingLocation = false;
           });
           return;
         }
       }
-      
+
       // Check permission
       PermissionStatus permissionGranted = await _location.hasPermission();
       if (permissionGranted == PermissionStatus.denied) {
         permissionGranted = await _location.requestPermission();
         if (permissionGranted != PermissionStatus.granted) {
-          ToastHelper.showError(context, 'Location permission is required to get current location.');
+          ToastHelper.showError(
+            context,
+            'Location permission is required to get current location.',
+          );
           setState(() {
             _isGettingLocation = false;
           });
           return;
         }
       }
-      
+
       // Get current location
       final LocationData locationData = await _location.getLocation();
-      
+
       setState(() {
-        _branchLatCtrl.text = locationData.latitude?.toStringAsFixed(6) ?? '0.0';
-        _branchLngCtrl.text = locationData.longitude?.toStringAsFixed(6) ?? '0.0';
+        _branchLatCtrl.text =
+            locationData.latitude?.toStringAsFixed(6) ?? '0.0';
+        _branchLngCtrl.text =
+            locationData.longitude?.toStringAsFixed(6) ?? '0.0';
         _isGettingLocation = false;
       });
-      
-      ToastHelper.showSuccess(context, 
-        'Location captured\nLat: ${locationData.latitude?.toStringAsFixed(6)}\nLng: ${locationData.longitude?.toStringAsFixed(6)}');
-      
+
+      ToastHelper.showSuccess(
+        context,
+        'Location captured\nLat: ${locationData.latitude?.toStringAsFixed(6)}\nLng: ${locationData.longitude?.toStringAsFixed(6)}',
+      );
     } catch (e) {
       setState(() {
         _isGettingLocation = false;
@@ -125,20 +146,20 @@ class _AddCarScreenState extends State<AddCarScreen> {
       ToastHelper.showError(context, 'Failed to get location: $e');
     }
   }
-  
+
   Future<void> _submitAddCar() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_carImages.isEmpty) {
       ToastHelper.showError(context, 'Please upload at least one car image');
       return;
     }
-    
+
     if (_carDocs.isEmpty) {
       ToastHelper.showError(context, 'Please upload car documents');
       return;
     }
-    
+
     final fields = <String, String>{
       'carName': _carNameCtrl.text.trim(),
       'model': _modelCtrl.text.trim(),
@@ -161,14 +182,14 @@ class _AddCarScreenState extends State<AddCarScreen> {
       'isPremium': _isPremium.toString(),
       'availability': '[{"date":"2025/12/20","timeSlots":["09:00","18:00"]}]',
     };
-    
+
     final provider = Provider.of<CarProvider>(context, listen: false);
     final success = await provider.addCar(
       fields: fields,
       carImages: _carImages,
       carDocs: _carDocs,
     );
-    
+
     if (success && mounted) {
       ToastHelper.showSuccess(context, 'Car added successfully!');
       Navigator.pop(context, true);
@@ -176,7 +197,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       ToastHelper.showError(context, provider.errorMessage);
     }
   }
-  
+
   @override
   void dispose() {
     _carNameCtrl.dispose();
@@ -198,19 +219,26 @@ class _AddCarScreenState extends State<AddCarScreen> {
     _branchLngCtrl.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CarProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111110) : const Color(0xFFF7F7F5),
+      backgroundColor: isDark
+          ? const Color(0xFF111110)
+          : const Color(0xFFF7F7F5),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF111110) : const Color(0xFFF7F7F5),
+        backgroundColor: isDark
+            ? const Color(0xFF111110)
+            : const Color(0xFFF7F7F5),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black87),
+          icon: Icon(
+            Icons.close,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -238,9 +266,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 onRemove: (index) => _removeImage(index, true),
                 isDark: isDark,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Documents Section
               _ImageUploadSection(
                 label: 'Documents (RC, Insurance) *',
@@ -249,73 +277,154 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 onRemove: (index) => _removeImage(index, false),
                 isDark: isDark,
               ),
-              
+
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 24),
-              
+
               // Car Details Section
               _SectionLabel('Car Details', isDark),
               const SizedBox(height: 12),
-              _buildTextField(_carNameCtrl, 'Car Name', 'e.g. Maruti Swift', Icons.directions_car, isDark, true),
+              _buildTextField(
+                _carNameCtrl,
+                'Car Name',
+                'e.g. Maruti Swift',
+                Icons.directions_car,
+                isDark,
+                true,
+              ),
               const SizedBox(height: 12),
-              _buildTextField(_modelCtrl, 'Model', 'e.g. ZXI, VXI', Icons.model_training, isDark, true),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_yearCtrl, 'Year', '2023', Icons.calendar_today, isDark, true, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_seatsCtrl, 'Seats', '5', Icons.event_seat, isDark, true, keyboardType: TextInputType.number)),
-                ],
+              _buildTextField(
+                _modelCtrl,
+                'Model',
+                'e.g. ZXI, VXI',
+                Icons.model_training,
+                isDark,
+                true,
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildTextField(_pricePerHourCtrl, 'Price/Hour (₹)', '0', Icons.currency_rupee, isDark, true, keyboardType: TextInputType.number)),
+                  Expanded(
+                    child: _buildTextField(
+                      _yearCtrl,
+                      'Year',
+                      '2023',
+                      Icons.calendar_today,
+                      isDark,
+                      true,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_pricePerDayCtrl, 'Price/Day (₹)', '0', Icons.currency_rupee, isDark, true, keyboardType: TextInputType.number)),
+                  Expanded(
+                    child: _buildTextField(
+                      _seatsCtrl,
+                      'Seats',
+                      '5',
+                      Icons.event_seat,
+                      isDark,
+                      true,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
                 ],
               ),
+              // const SizedBox(height: 12),
+              // Row(
+              //   children: [
+              //     Expanded(child: _buildTextField(_pricePerHourCtrl, 'Price/Hour (₹)', '0', Icons.currency_rupee, isDark, true, keyboardType: TextInputType.number)),
+              //     const SizedBox(width: 12),
+              //     Expanded(child: _buildTextField(_pricePerDayCtrl, 'Price/Day (₹)', '0', Icons.currency_rupee, isDark, true, keyboardType: TextInputType.number)),
+              //   ],
+              // ),
+              // const SizedBox(height: 12),
+              // Row(
+              //   children: [
+              //     Expanded(child: _buildTextField(_delayPerHourCtrl, 'Delay/Hour (₹)', '0', Icons.timer, isDark, true, keyboardType: TextInputType.number)),
+              //     const SizedBox(width: 12),
+              //     Expanded(child: _buildTextField(_delayPerDayCtrl, 'Delay/Day (₹)', '0', Icons.timer, isDark, true, keyboardType: TextInputType.number)),
+              //   ],
+              // ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _buildTextField(_delayPerHourCtrl, 'Delay/Hour (₹)', '0', Icons.timer, isDark, true, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(_delayPerDayCtrl, 'Delay/Day (₹)', '0', Icons.timer, isDark, true, keyboardType: TextInputType.number)),
-                ],
+              _buildTextField(
+                _vehicleNumberCtrl,
+                'Vehicle Number',
+                'MH01AB1234',
+                Icons.badge,
+                isDark,
+                true,
               ),
               const SizedBox(height: 12),
-              _buildTextField(_vehicleNumberCtrl, 'Vehicle Number', 'MH01AB1234', Icons.badge, isDark, true),
+              _buildDropdownField(
+                _fuelCtrl,
+                'Fuel Type',
+                _fuelTypes,
+                isDark,
+                true,
+              ),
               const SizedBox(height: 12),
-              _buildDropdownField(_fuelCtrl, 'Fuel Type', _fuelTypes, isDark, true),
+              _buildDropdownField(
+                _carTypeCtrl,
+                'Car Type',
+                _carTypes,
+                isDark,
+                true,
+              ),
               const SizedBox(height: 12),
-              _buildDropdownField(_carTypeCtrl, 'Car Type', _carTypes, isDark, true),
+              _buildDropdownField(
+                _typeCtrl,
+                'Transmission',
+                _transmissions,
+                isDark,
+                true,
+              ),
               const SizedBox(height: 12),
-              _buildDropdownField(_typeCtrl, 'Transmission', _transmissions, isDark, true),
-              const SizedBox(height: 12),
-              _buildTextField(_descriptionCtrl, 'Description', 'Car description', Icons.description, isDark, false, maxLines: 3),
-              
+              _buildTextField(
+                _descriptionCtrl,
+                'Description',
+                'Car description',
+                Icons.description,
+                isDark,
+                false,
+                maxLines: 3,
+              ),
+
               const SizedBox(height: 20),
-              
+
               // Location Details
               _SectionLabel('Location Details', isDark),
               const SizedBox(height: 12),
-              _buildTextField(_locationCtrl, 'Location', 'City name', Icons.location_on, isDark, false),
+              _buildTextField(
+                _locationCtrl,
+                'Location',
+                'City name',
+                Icons.location_on,
+                isDark,
+                false,
+              ),
               const SizedBox(height: 12),
-              _buildTextField(_branchNameCtrl, 'Branch Name', 'e.g. Andheri Branch', Icons.business, isDark, false),
+              _buildTextField(
+                _branchNameCtrl,
+                'Branch Name',
+                'e.g. Andheri Branch',
+                Icons.business,
+                isDark,
+                false,
+              ),
               const SizedBox(height: 12),
-              
+
               // Lat/Long with Get Current Location Button
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: _buildTextField(
-                      _branchLatCtrl, 
-                      'Latitude *', 
-                      'e.g. 17.315289', 
-                      Icons.map, 
-                      isDark, 
+                      _branchLatCtrl,
+                      'Latitude *',
+                      'e.g. 17.315289',
+                      Icons.map,
+                      isDark,
                       true,
                       keyboardType: TextInputType.number,
                     ),
@@ -323,20 +432,20 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildTextField(
-                      _branchLngCtrl, 
-                      'Longitude *', 
-                      'e.g. 78.561221', 
-                      Icons.map, 
-                      isDark, 
+                      _branchLngCtrl,
+                      'Longitude *',
+                      'e.g. 78.561221',
+                      Icons.map,
+                      isDark,
                       true,
                       keyboardType: TextInputType.number,
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Get Current Location Button
               SizedBox(
                 width: double.infinity,
@@ -350,38 +459,52 @@ class _AddCarScreenState extends State<AddCarScreen> {
                         )
                       : const Icon(Icons.my_location, size: 18),
                   label: Text(
-                    _isGettingLocation ? 'Getting Location...' : 'Get Current Location',
+                    _isGettingLocation
+                        ? 'Getting Location...'
+                        : 'Get Current Location',
                     style: const TextStyle(fontSize: 13),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF242422) : const Color(0xFFF0F0EE),
+                    backgroundColor: isDark
+                        ? const Color(0xFF242422)
+                        : const Color(0xFFF0F0EE),
                     foregroundColor: const Color(0xFF1D9E75),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
-                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                        color: isDark
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300,
                       ),
                     ),
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Premium Toggle
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1C1C1A) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Premium Listing', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Premium Listing',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     Switch(
                       value: _isPremium,
                       onChanged: (val) => setState(() => _isPremium = val),
@@ -390,9 +513,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               // Submit Button
               SizedBox(
                 width: double.infinity,
@@ -401,15 +524,26 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   onPressed: provider.isAdding ? null : _submitAddCar,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1D9E75),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: provider.isAdding
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Add Vehicle', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      : const Text(
+                          'Add Vehicle',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -418,7 +552,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       ),
     );
   }
-  
+
   Widget _buildTextField(
     TextEditingController controller,
     String label,
@@ -445,7 +579,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+          borderSide: BorderSide(
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -457,7 +593,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
           : null,
     );
   }
-  
+
   Widget _buildDropdownField(
     TextEditingController controller,
     String label,
@@ -474,17 +610,17 @@ class _AddCarScreenState extends State<AddCarScreen> {
         fillColor: isDark ? const Color(0xFF1C1C1A) : Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      items: items.map((item) => DropdownMenuItem(
-        value: item, 
-        child: Text(item)
-      )).toList(),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
       onChanged: (value) {
         if (value != null) {
           controller.text = value;
         }
       },
       validator: required
-          ? (value) => value == null || value.isEmpty ? 'Please select $label' : null
+          ? (value) =>
+                value == null || value.isEmpty ? 'Please select $label' : null
           : null,
     );
   }
@@ -538,16 +674,27 @@ class _ImageUploadSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1C1C1A) : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+              border: Border.all(
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+              ),
             ),
             child: files.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_photo_alternate, size: 30, color: isDark ? Colors.white54 : Colors.black54),
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 30,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Tap to add files', style: TextStyle(color: isDark ? Colors.white54 : Colors.black54)),
+                        Text(
+                          'Tap to add files',
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -562,7 +709,10 @@ class _ImageUploadSection extends StatelessWidget {
                           height: 84,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(image: FileImage(files[index]), fit: BoxFit.cover),
+                            image: DecorationImage(
+                              image: FileImage(files[index]),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         Positioned(
@@ -576,7 +726,11 @@ class _ImageUploadSection extends StatelessWidget {
                                 color: Colors.black54,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.close, size: 12, color: Colors.white),
+                              child: const Icon(
+                                Icons.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

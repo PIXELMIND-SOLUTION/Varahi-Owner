@@ -16,7 +16,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:varahiowner/providers/Staff/providers/single_booking_provider.dart';
-import 'package:varahiowner/views/Staff/all_bookings_screen.dart'; // Add this import
+import 'package:varahiowner/views/Staff/all_bookings_screen.dart';
+import 'package:varahiowner/views/navbar_screen.dart'; // Add this import
 
 // Define the mandatory image categories
 enum ImageCategory {
@@ -1084,18 +1085,18 @@ class _CarDetailsState extends State<CarDetails> {
 
       if (response.statusCode == 200) {
         // OTP verification successful
-        final responseData = json.decode(response.body);
+        // final responseData = json.decode(response.body);
 
         // Extract deposit PDF URL from response
-        String? depositPdfPath = responseData['depositPDF'];
-        if (depositPdfPath != null) {
-          String fullPdfUrl =
-              'https://varahibackend.varahiselfdrivecars.com$depositPdfPath';
-          print('PDF URL: $fullPdfUrl');
+        // String? depositPdfPath = responseData['depositPDF'];
+        // if (depositPdfPath != null) {
+        //   String fullPdfUrl =
+        //       'https://varahibackend.varahiselfdrivecars.com$depositPdfPath';
+        //   print('PDF URL: $fullPdfUrl');
 
-          // Download PDF before navigation
-          await _downloadPdfToDownloads(fullPdfUrl, bookingId);
-        }
+        //   // Download PDF before navigation
+        //   await _downloadPdfToDownloads(fullPdfUrl, bookingId);
+        // }
 
         Navigator.pop(context); // Close loading dialog
 
@@ -1104,7 +1105,7 @@ class _CarDetailsState extends State<CarDetails> {
         if (booking?.id != null) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => AllBookingsScreen()),
+            MaterialPageRoute(builder: (context) => MainShell(initialIndex: 1)),
           );
         } else {
           // If no booking ID, just navigate (fallback)
@@ -1114,7 +1115,7 @@ class _CarDetailsState extends State<CarDetails> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => AllBookingsScreen()),
+            MaterialPageRoute(builder: (context) => MainShell(initialIndex: 1)),
           );
         }
       } else if (response.statusCode == 400) {

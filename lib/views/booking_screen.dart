@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:varahiowner/helpers/pdf_helper.dart';
 import 'package:varahiowner/model/MyBookings/booking_model.dart';
 import 'package:provider/provider.dart';
 import 'package:varahiowner/providers/booking_provider.dart';
@@ -324,6 +325,276 @@ class _BookingsScreenState extends State<BookingsScreen>
   }
 }
 
+// class _BookingCard extends StatelessWidget {
+//   final BookingModel booking;
+//   final Color statusColor;
+//   final IconData statusIcon;
+//   final VoidCallback onUpdateStatus;
+
+//   const _BookingCard({
+//     required this.booking,
+//     required this.statusColor,
+//     required this.statusIcon,
+//     required this.onUpdateStatus,
+//   });
+
+//   String _formatDate(String dateString) {
+//     try {
+//       final date = DateTime.parse(dateString);
+//       return '${date.day}/${date.month}/${date.year}';
+//     } catch (e) {
+//       return dateString;
+//     }
+//   }
+
+//   String _formatPrice(double price) {
+//     return '₹${price.toStringAsFixed(2)}';
+//   }
+
+//   void _handleViewDetails(BuildContext context) {
+//     final status = booking.status.toLowerCase();
+
+//     if (status == 'confirmed') {
+//       Navigator.push(
+//         context,
+//         MaterialPageRoute(
+//           builder: (context) => BookingScreen(bookingId: booking.id),
+//         ),
+//       );
+//     } else if (status == 'active') {
+//       Navigator.push(
+//         context,
+//         MaterialPageRoute(
+//           builder: (context) => ReturnUploadScreen(id: booking.id),
+//         ),
+//       );
+//     } else {
+//       // For other statuses (pending, completed, cancelled)
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text(
+//             'Details view not available for ${booking.status} bookings',
+//           ),
+//           duration: const Duration(seconds: 2),
+//         ),
+//       );
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final isCompletedOrCancelled =
+//         booking.status.toLowerCase() == 'completed' ||
+//         booking.status.toLowerCase() == 'cancelled';
+
+//     // Determine button text based on status
+//     String getProceedButtonText() {
+//       final status = booking.status.toLowerCase();
+//       if (status == 'confirmed') return 'Proceed';
+//       if (status == 'active') return 'Return';
+//       return 'View Details';
+//     }
+
+//     return Card(
+//       margin: const EdgeInsets.only(bottom: 12),
+//       elevation: 2,
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       child: Padding(
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // Header with car name and status
+//             Row(
+//               children: [
+//                 Container(
+//                   padding: const EdgeInsets.all(8),
+//                   decoration: BoxDecoration(
+//                     color: statusColor.withOpacity(0.1),
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Icon(statusIcon, color: statusColor, size: 24),
+//                 ),
+//                 const SizedBox(width: 12),
+//                 Expanded(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Text(
+//                         '${booking.car.carName} ${booking.car.model}',
+//                         style: const TextStyle(
+//                           fontSize: 16,
+//                           fontWeight: FontWeight.bold,
+//                         ),
+//                         maxLines: 1,
+//                         overflow: TextOverflow.ellipsis,
+//                       ),
+//                       Text(
+//                         booking.car.vehicleNumber,
+//                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 10,
+//                     vertical: 4,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: statusColor.withOpacity(0.1),
+//                     borderRadius: BorderRadius.circular(20),
+//                     border: Border.all(color: statusColor.withOpacity(0.3)),
+//                   ),
+//                   child: Text(
+//                     booking.status.toUpperCase(),
+//                     style: TextStyle(
+//                       fontSize: 11,
+//                       fontWeight: FontWeight.w600,
+//                       color: statusColor,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 12),
+//             const Divider(),
+//             const SizedBox(height: 8),
+//             // Booking details
+//             Row(
+//               children: [
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.calendar_today,
+//                     label: 'Start Date',
+//                     value: _formatDate(booking.rentalStartDate),
+//                   ),
+//                 ),
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.calendar_today,
+//                     label: 'End Date',
+//                     value: _formatDate(booking.rentalEndDate),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 8),
+//             Row(
+//               children: [
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.attach_money,
+//                     label: 'Total Price',
+//                     value: _formatPrice(booking.totalPrice),
+//                     valueColor: Colors.green,
+//                   ),
+//                 ),
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.person,
+//                     label: 'Customer',
+//                     value: booking.user.name,
+//                     maxLines: 1,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 8),
+//             Row(
+//               children: [
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.location_on,
+//                     label: 'Pickup',
+//                     value: booking.from,
+//                     maxLines: 1,
+//                   ),
+//                 ),
+//                 Expanded(
+//                   child: _InfoRow(
+//                     icon: Icons.location_on,
+//                     label: 'Drop',
+//                     value: booking.to,
+//                     maxLines: 1,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             if (booking.status == 'confirmed')
+//               if (booking.otp > 0) ...[
+//                 const SizedBox(height: 8),
+//                 _InfoRow(
+//                   icon: Icons.security,
+//                   label: 'OTP',
+//                   value: booking.otp.toString(),
+//                   valueColor: Colors.blue,
+//                 ),
+//               ],
+//             if (booking.status == 'active')
+//               if (booking.otp > 0) ...[
+//                 const SizedBox(height: 8),
+//                 _InfoRow(
+//                   icon: Icons.security,
+//                   label: 'Return OTP',
+//                   value: booking.returnOTP.toString(),
+//                   valueColor: Colors.blue,
+//                 ),
+//               ],
+//             const SizedBox(height: 12),
+//             if (booking.status == "confirmed" || booking.status == "active")
+//               // Action buttons
+//               Row(
+//                 children: [
+//                   // if (!isCompletedOrCancelled) ...[
+//                   //   Expanded(
+//                   //     child: OutlinedButton.icon(
+//                   //       onPressed: onUpdateStatus,
+//                   //       icon: const Icon(Icons.update, size: 18),
+//                   //       label: const Text('Update Status'),
+//                   //       style: OutlinedButton.styleFrom(
+//                   //         foregroundColor: statusColor,
+//                   //         side: BorderSide(color: statusColor),
+//                   //         padding: const EdgeInsets.symmetric(vertical: 10),
+//                   //         shape: RoundedRectangleBorder(
+//                   //           borderRadius: BorderRadius.circular(8),
+//                   //         ),
+//                   //       ),
+//                   //     ),
+//                   //   ),
+//                   //   const SizedBox(width: 8),
+//                   // ],
+//                   Expanded(
+//                     child: ElevatedButton.icon(
+//                       onPressed: () => _handleViewDetails(context),
+//                       icon: Icon(
+//                         booking.status.toLowerCase() == 'confirmed'
+//                             ? Icons.play_arrow
+//                             : booking.status.toLowerCase() == 'active'
+//                             ? Icons.assignment_return
+//                             : Icons.visibility,
+//                         size: 18,
+//                       ),
+//                       label: Text(getProceedButtonText()),
+//                       style: ElevatedButton.styleFrom(
+//                         backgroundColor: statusColor,
+//                         foregroundColor: Colors.white,
+//                         padding: const EdgeInsets.symmetric(vertical: 10),
+//                         shape: RoundedRectangleBorder(
+//                           borderRadius: BorderRadius.circular(8),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class _BookingCard extends StatelessWidget {
   final BookingModel booking;
   final Color statusColor;
@@ -368,27 +639,81 @@ class _BookingCard extends StatelessWidget {
         ),
       );
     } else {
-      // For other statuses (pending, completed, cancelled)
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Details view not available for ${booking.status} bookings',
-          ),
-          duration: const Duration(seconds: 2),
+        const SnackBar(
+          content: Text('Details view not available for this booking status'),
+          duration: Duration(seconds: 2),
         ),
       );
     }
   }
 
+  Future<void> _handleDownloadPdf(BuildContext context) async {
+    String? pdfUrl;
+    String fileName;
+    final status = booking.status.toLowerCase();
+
+    if (status == 'active' && booking.depositPDF != null) {
+      pdfUrl = booking.depositPDF!;
+      fileName = 'deposit_${booking.id}.pdf';
+    } else if (status == 'completed' && booking.finalBookingPDF != null) {
+      pdfUrl = booking.finalBookingPDF!;
+      fileName = 'final_booking_${booking.id}.pdf';
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No ${status == 'active' ? 'deposit' : 'final booking'} PDF available',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await PdfDownloadHelper.downloadAndOpenPdf(pdfUrl, fileName);
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF downloaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isCompletedOrCancelled =
-        booking.status.toLowerCase() == 'completed' ||
-        booking.status.toLowerCase() == 'cancelled';
+    final status = booking.status.toLowerCase();
+    final showDownloadButton =
+        (status == 'active' &&
+            booking.depositPDF != null &&
+            booking.depositPDF!.isNotEmpty) ||
+        (status == 'completed' &&
+            booking.finalBookingPDF != null &&
+            booking.finalBookingPDF!.isNotEmpty);
 
-    // Determine button text based on status
     String getProceedButtonText() {
-      final status = booking.status.toLowerCase();
       if (status == 'confirmed') return 'Proceed';
       if (status == 'active') return 'Return';
       return 'View Details';
@@ -541,50 +866,55 @@ class _BookingCard extends StatelessWidget {
                 ),
               ],
             const SizedBox(height: 12),
-            if (booking.status == "confirmed" || booking.status == "active")
-              // Action buttons
+
+            // Action buttons row
+            if (status == "confirmed" ||
+                status == "active" ||
+                showDownloadButton)
               Row(
                 children: [
-                  // if (!isCompletedOrCancelled) ...[
-                  //   Expanded(
-                  //     child: OutlinedButton.icon(
-                  //       onPressed: onUpdateStatus,
-                  //       icon: const Icon(Icons.update, size: 18),
-                  //       label: const Text('Update Status'),
-                  //       style: OutlinedButton.styleFrom(
-                  //         foregroundColor: statusColor,
-                  //         side: BorderSide(color: statusColor),
-                  //         padding: const EdgeInsets.symmetric(vertical: 10),
-                  //         shape: RoundedRectangleBorder(
-                  //           borderRadius: BorderRadius.circular(8),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
-                  //   const SizedBox(width: 8),
-                  // ],
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleViewDetails(context),
-                      icon: Icon(
-                        booking.status.toLowerCase() == 'confirmed'
-                            ? Icons.play_arrow
-                            : booking.status.toLowerCase() == 'active'
-                            ? Icons.assignment_return
-                            : Icons.visibility,
-                        size: 18,
-                      ),
-                      label: Text(getProceedButtonText()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: statusColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  if (showDownloadButton)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _handleDownloadPdf(context),
+                        icon: const Icon(Icons.download, size: 18),
+                        label: Text(
+                          status == 'active' ? 'Deposit PDF' : 'Final PDF',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: statusColor,
+                          side: BorderSide(color: statusColor),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  if (showDownloadButton &&
+                      (status == "confirmed" || status == "active"))
+                    const SizedBox(width: 8),
+                  if (status == "confirmed" || status == "active")
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _handleViewDetails(context),
+                        icon: Icon(
+                          status == 'confirmed'
+                              ? Icons.play_arrow
+                              : Icons.assignment_return,
+                          size: 18,
+                        ),
+                        label: Text(getProceedButtonText()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: statusColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
           ],
