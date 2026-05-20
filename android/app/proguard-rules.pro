@@ -1,9 +1,31 @@
-# This tells R8 to ignore the missing classes error
--ignorewarnings
--keepattributes *Annotation*
--keepattributes Signature
--dontwarn **
+# Keep everything - no exceptions
+-keep class com.pixelmind.varahiowner.** { *; }
+-keepclassmembers class com.pixelmind.varahiowner.** {
+    <init>(...);
+    <fields>;
+    <methods>;
+}
 
-# If the error specifically mentioned missing rules, 
-# you can also add this more specific line:
--dontwarn com.google.errorprone.annotations.**
+# Keep ChangeNotifier and notifyListeners
+-keep class * extends flutter.foundation.ChangeNotifier {
+    <init>(...);
+    <fields>;
+    <methods>;
+}
+-keepclassmembers class * {
+    void notifyListeners();
+}
+
+# Keep all model classes and their fromJson methods
+-keepclassmembers class * {
+    *** fromJson(...);
+}
+
+# Keep all fields in model classes
+-keepclassmembers class com.pixelmind.varahiowner.model.** {
+    <fields>;
+}
+
+# Ignore warnings
+-ignorewarnings
+-dontwarn **
