@@ -67,5 +67,24 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+
+	<key>NSCameraUsageDescription</key>
+<string>We need camera access to capture images.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need photo library access to select images.</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>We need permission to save images.</string>
+
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>We need your location to improve app functionality and provide location-based services.</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to improve app functionality and provide location-based services.</string>
+
+<key>NSLocationAlwaysUsageDescription</key>
+<string>We need location access for better service.</string>
+
 </dict>
 </plist>

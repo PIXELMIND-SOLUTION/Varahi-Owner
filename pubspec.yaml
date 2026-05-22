@@ -2,7 +2,7 @@ name: varahiowner
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.5+6
+version: 1.0.7+8
 
 environment:
   sdk: ^3.8.1
@@ -28,6 +28,7 @@ dependencies:
   path_provider: ^2.1.5
   carousel_slider: ^5.1.2
   geolocator: ^14.0.2
+  meta: ^1.16.0
 
 dev_dependencies:
   flutter_test:

@@ -681,225 +681,335 @@ class _PickupDetailsScreenState extends State<PickupDetailsScreen> {
     );
   }
 
+  // Widget _buildDocumentCard({
+  //   required String title,
+  //   File? image,
+  //   String? existingImageUrl,
+  //   VoidCallback? onTap,
+  //   VoidCallback? onImageView,
+  //   VoidCallback? onUpload,
+  //   bool isUploading = false,
+  //   bool isUploaded = false,
+  // }) {
+  //   // Determine which image to show - priority: new image > existing image > default
+  //   ImageProvider imageProvider;
+  //   bool hasImage = false;
+
+  //   if (image != null) {
+  //     imageProvider = FileImage(image);
+  //     hasImage = true;
+  //   } else if (existingImageUrl != null && existingImageUrl!.isNotEmpty) {
+  //     imageProvider = NetworkImage(existingImageUrl!);
+  //     hasImage = true;
+  //   } else {
+  //     imageProvider = const AssetImage('assets/security.jpeg');
+  //     hasImage = false;
+  //   }
+
+  //   return GestureDetector(
+  //     onTap: hasImage
+  //         ? onImageView
+  //         : onTap, // If image exists, show full screen, otherwise show picker
+  //     child: Container(
+  //       width: double.infinity,
+  //       height: 206,
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(12),
+  //         image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+  //       ),
+  //       child: Stack(
+  //         children: [
+  //           // Gradient overlay at bottom
+  //           Positioned(
+  //             bottom: 0,
+  //             left: 0,
+  //             right: 0,
+  //             height: 60,
+  //             child: Container(
+  //               decoration: BoxDecoration(
+  //                 borderRadius: const BorderRadius.vertical(
+  //                   bottom: Radius.circular(12),
+  //                 ),
+  //                 gradient: LinearGradient(
+  //                   begin: Alignment.topCenter,
+  //                   end: Alignment.bottomCenter,
+  //                   colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+  //                 ),
+  //               ),
+  //               child: Padding(
+  //                 padding: const EdgeInsets.all(12.0),
+  //                 child: Row(
+  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                   children: [
+  //                     Align(
+  //                       alignment: Alignment.bottomLeft,
+  //                       child: Text(
+  //                         title,
+  //                         style: const TextStyle(
+  //                           color: Colors.white,
+  //                           fontSize: 16,
+  //                           fontWeight: FontWeight.bold,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     // Add edit button if image exists
+  //                     if (hasImage)
+  //                       GestureDetector(
+  //                         onTap: onTap,
+  //                         child: Container(
+  //                           padding: const EdgeInsets.all(4),
+  //                           decoration: BoxDecoration(
+  //                             color: Colors.white.withOpacity(0.2),
+  //                             borderRadius: BorderRadius.circular(4),
+  //                           ),
+  //                           child: const Icon(
+  //                             Icons.edit,
+  //                             color: Colors.white,
+  //                             size: 16,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+
+  //           // Upload/Success icon
+  //           if (!isUploaded)
+  //             Center(
+  //               child: Positioned(
+  //                 child: GestureDetector(
+  //                   onTap: (image != null && !isUploaded) ? onUpload : null,
+  //                   child: Container(
+  //                     width: 60,
+  //                     height: 60,
+  //                     decoration: BoxDecoration(
+  //                       color: isUploaded
+  //                           ? Colors.green
+  //                           : (image != null && !isUploaded)
+  //                           ? const Color(0xFF120698)
+  //                           : const Color.fromARGB(
+  //                               255,
+  //                               81,
+  //                               81,
+  //                               81,
+  //                             ).withOpacity(0.7),
+  //                       shape: BoxShape.circle,
+  //                     ),
+  //                     child: isUploading
+  //                         ? const CircularProgressIndicator(
+  //                             color: Colors.white,
+  //                             strokeWidth: 2,
+  //                           )
+  //                         : Column(
+  //                             mainAxisSize: MainAxisSize.min,
+  //                             children: [
+  //                               Icon(
+  //                                 isUploaded
+  //                                     ? Icons.check
+  //                                     : (image != null && !isUploaded)
+  //                                     ? Icons.cloud_upload
+  //                                     : null,
+  //                                 color: Colors.white,
+  //                                 size: 20,
+  //                               ),
+  //                               const SizedBox(
+  //                                 height: 4,
+  //                               ), // space between icon & text
+  //                               Text(
+  //                                 "Upload",
+  //                                 style: const TextStyle(
+  //                                   color: Colors.white,
+  //                                   fontSize: 12,
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+
+  //           // Upload/Success icon
+  //           if (isUploaded)
+  //             Positioned(
+  //               top: 12,
+  //               right: 12,
+  //               child: GestureDetector(
+  //                 onTap: (image != null && !isUploaded) ? onUpload : null,
+  //                 child: Container(
+  //                   width: 40,
+  //                   height: 40,
+  //                   decoration: BoxDecoration(
+  //                     color: isUploaded
+  //                         ? Colors.green
+  //                         : (image != null && !isUploaded)
+  //                         ? const Color(0xFF120698)
+  //                         : Colors.grey.withOpacity(0.7),
+  //                     shape: BoxShape.circle,
+  //                   ),
+  //                   child: isUploading
+  //                       ? const CircularProgressIndicator(
+  //                           color: Colors.white,
+  //                           strokeWidth: 2,
+  //                         )
+  //                       : Icon(
+  //                           isUploaded
+  //                               ? Icons.check
+  //                               : (image != null && !isUploaded)
+  //                               ? Icons.cloud_upload
+  //                               : Icons.add_a_photo,
+  //                           color: Colors.white,
+  //                           size: 20,
+  //                         ),
+  //                 ),
+  //               ),
+  //             ),
+
+  //           // Camera icon overlay if no image is selected and no existing image
+  //           if (!hasImage && image == null)
+  //             const Center(
+  //               child: Icon(Icons.add_a_photo, color: Colors.white, size: 48),
+  //             ),
+
+  //           // Full screen view icon when image exists
+  //           if (hasImage)
+  //             Positioned(
+  //               top: 12,
+  //               left: 12,
+  //               child: GestureDetector(
+  //                 onTap: onImageView,
+  //                 child: Container(
+  //                   width: 40,
+  //                   height: 40,
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.black.withOpacity(0.6),
+  //                     shape: BoxShape.circle,
+  //                   ),
+  //                   child: const Icon(
+  //                     Icons.fullscreen,
+  //                     color: Colors.white,
+  //                     size: 20,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+
   Widget _buildDocumentCard({
-    required String title,
-    File? image,
-    String? existingImageUrl,
-    VoidCallback? onTap,
-    VoidCallback? onImageView,
-    VoidCallback? onUpload,
-    bool isUploading = false,
-    bool isUploaded = false,
-  }) {
-    // Determine which image to show - priority: new image > existing image > default
-    ImageProvider imageProvider;
-    bool hasImage = false;
-
-    if (image != null) {
-      imageProvider = FileImage(image);
-      hasImage = true;
-    } else if (existingImageUrl != null && existingImageUrl!.isNotEmpty) {
-      imageProvider = NetworkImage(existingImageUrl!);
-      hasImage = true;
-    } else {
-      imageProvider = const AssetImage('assets/security.jpeg');
-      hasImage = false;
-    }
-
-    return GestureDetector(
-      onTap: hasImage
-          ? onImageView
-          : onTap, // If image exists, show full screen, otherwise show picker
-      child: Container(
-        width: double.infinity,
-        height: 206,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
-        ),
-        child: Stack(
-          children: [
-            // Gradient overlay at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 60,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(12),
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+  required String title,
+  File? image,
+  String? existingImageUrl,
+  VoidCallback? onTap,
+  VoidCallback? onImageView,
+  VoidCallback? onUpload,
+  bool isUploading = false,
+  bool isUploaded = false,
+}) {
+  final bool hasImage = image != null || (existingImageUrl != null && existingImageUrl.isNotEmpty);
+  
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      const SizedBox(height: 8),
+      GestureDetector(
+        onTap: hasImage ? onImageView : onTap,
+        child: Container(
+          width: double.infinity,
+          height: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                // Image
+                if (hasImage)
+                  (image != null
+                      ? Image.file(image, fit: BoxFit.cover, width: double.infinity)
+                      : Image.network(existingImageUrl!, fit: BoxFit.cover, width: double.infinity))
+                else
+                  Container(
+                    color: Colors.grey.shade100,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.cloud_upload, size: 48, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text('Tap to upload', style: TextStyle(color: Colors.grey)),
+                        ],
                       ),
-                      // Add edit button if image exists
-                      if (hasImage)
-                        GestureDetector(
-                          onTap: onTap,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                
+                // Upload button for new images
+                if (image != null && !isUploaded)
+                  Positioned(
+                    bottom: 12,
+                    left: 12,
+                    child: GestureDetector(
+                      onTap: onUpload,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF120698),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: isUploading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text('Upload', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                
+                // Success checkmark
+                if (isUploaded)
+                  const Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Icon(Icons.check_circle, color: Colors.green, size: 32),
+                  ),
+                
+                // Edit button for existing images
+                if (hasImage && !isUploading)
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: onTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-
-            // Upload/Success icon
-            if (!isUploaded)
-              Center(
-                child: Positioned(
-                  child: GestureDetector(
-                    onTap: (image != null && !isUploaded) ? onUpload : null,
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: isUploaded
-                            ? Colors.green
-                            : (image != null && !isUploaded)
-                            ? const Color(0xFF120698)
-                            : const Color.fromARGB(
-                                255,
-                                81,
-                                81,
-                                81,
-                              ).withOpacity(0.7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: isUploading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isUploaded
-                                      ? Icons.check
-                                      : (image != null && !isUploaded)
-                                      ? Icons.cloud_upload
-                                      : null,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(
-                                  height: 4,
-                                ), // space between icon & text
-                                Text(
-                                  "Upload",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Upload/Success icon
-            if (isUploaded)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: GestureDetector(
-                  onTap: (image != null && !isUploaded) ? onUpload : null,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isUploaded
-                          ? Colors.green
-                          : (image != null && !isUploaded)
-                          ? const Color(0xFF120698)
-                          : Colors.grey.withOpacity(0.7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: isUploading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          )
-                        : Icon(
-                            isUploaded
-                                ? Icons.check
-                                : (image != null && !isUploaded)
-                                ? Icons.cloud_upload
-                                : Icons.add_a_photo,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                  ),
-                ),
-              ),
-
-            // Camera icon overlay if no image is selected and no existing image
-            if (!hasImage && image == null)
-              const Center(
-                child: Icon(Icons.add_a_photo, color: Colors.white, size: 48),
-              ),
-
-            // Full screen view icon when image exists
-            if (hasImage)
-              Positioned(
-                top: 12,
-                left: 12,
-                child: GestureDetector(
-                  onTap: onImageView,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.fullscreen,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+    ],
+  );
+}
 }
 
 // Full screen image viewer with zoom capability

@@ -525,16 +525,43 @@ class _CarDetailsState extends State<CarDetails> {
                     ),
                     const SizedBox(height: 25),
                     Image.network(
-                      '${booking?.car?.carImage[0]}',
-                      fit: BoxFit.fill,
-                      width: double.infinity,
-                      height: 263,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey.shade300,
-                        height: 200,
-                        child: Icon(Icons.error, size: screenWidth * 0.1),
-                      ),
-                    ),
+  '${booking?.car?.carImage.isNotEmpty == true ? booking!.car!.carImage[0] : ''}',
+  fit: BoxFit.fill,
+  width: double.infinity,
+  height: 263,
+  loadingBuilder: (context, child, loadingProgress) {
+    if (loadingProgress == null) return child;
+    return Container(
+      color: Colors.grey.shade300,
+      height: 263,
+      width: double.infinity,
+      child: Center(
+        child: CircularProgressIndicator(
+          value: loadingProgress.expectedTotalBytes != null
+              ? loadingProgress.cumulativeBytesLoaded / 
+                loadingProgress.expectedTotalBytes!
+              : null,
+        ),
+      ),
+    );
+  },
+  errorBuilder: (context, error, stackTrace) => Container(
+    color: Colors.grey.shade300,
+    height: 263,
+    width: double.infinity,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.broken_image, size: screenWidth * 0.1, color: Colors.grey.shade600),
+        const SizedBox(height: 8),
+        Text(
+          'Image not available',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+        ),
+      ],
+    ),
+  ),
+),
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
