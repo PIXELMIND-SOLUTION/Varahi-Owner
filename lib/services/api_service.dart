@@ -45,12 +45,12 @@ class ApiService {
         final file = carImages[i];
         final stream = http.ByteStream(file.openRead());
         final length = await file.length();
-        final multipartFile = http.MultipartFile(
-          i == 0 ? 'carImage' : 'carImage_$i',
-          stream,
-          length,
-          filename: file.path.split('/').last,
-        );
+      final multipartFile = http.MultipartFile(
+  'carImage',
+  stream,
+  length,
+  filename: file.path.split('/').last,
+);
         request.files.add(multipartFile);
       }
       
@@ -59,12 +59,12 @@ class ApiService {
         final file = carDocs[i];
         final stream = http.ByteStream(file.openRead());
         final length = await file.length();
-        final multipartFile = http.MultipartFile(
-          i == 0 ? 'carDocs' : 'carDocs_$i',
-          stream,
-          length,
-          filename: file.path.split('/').last,
-        );
+final multipartFile = http.MultipartFile(
+  i == 0 ? 'carDocs' : 'carDocs_$i',
+  stream,
+  length,
+  filename: file.path.split('/').last,
+);
         request.files.add(multipartFile);
       }
       
@@ -198,7 +198,72 @@ class ApiService {
 
   // Add to existing ApiService class
 
-// Update car (Multipart)
+// // Update car (Multipart)
+// static Future<Map<String, dynamic>> updateCar({
+//   required String ownerId,
+//   required String carId,
+//   required Map<String, String> fields,
+//   required List<File> carImages,
+//   required List<File> carDocs,
+// }) async {
+//   try {
+//     final uri = Uri.parse('$baseUrl/owner/updatecar/$ownerId/$carId');
+//     final request = http.MultipartRequest('PUT', uri);
+    
+//     // Add fields
+//     fields.forEach((key, value) {
+//       request.fields[key] = value;
+//     });
+//     print("oooooooooooooooooooooooooooo${carImages.length}");
+//     // Add car images
+//     for (int i = 0; i < carImages.length; i++) {
+//       final file = carImages[i];
+//       final stream = http.ByteStream(file.openRead());
+//       final length = await file.length();
+//       final multipartFile = http.MultipartFile(
+//         i == 0 ? 'carImage' : 'carImage_$i',
+//         stream,
+//         length,
+//         filename: file.path.split('/').last,
+//       );
+//       request.files.add(multipartFile);
+//     }
+    
+//     // Add car documents
+//     for (int i = 0; i < carDocs.length; i++) {
+//       final file = carDocs[i];
+//       final stream = http.ByteStream(file.openRead());
+//       final length = await file.length();
+//       final multipartFile = http.MultipartFile(
+//         i == 0 ? 'carDocs' : 'carDocs_$i',
+//         stream,
+//         length,
+//         filename: file.path.split('/').last,
+//       );
+//       request.files.add(multipartFile);
+//     }
+    
+//     final response = await request.send();
+//     final responseBody = await response.stream.bytesToString();
+//     final decoded = json.decode(responseBody);
+
+//     print("pppppppppp${decoded}");
+    
+//     return {
+//       'statusCode': response.statusCode,
+//       'body': decoded,
+//     };
+//   } catch (e) {
+//     return {
+//       'statusCode': 500,
+//       'body': {'success': false, 'message': 'Network error: $e'},
+//     };
+//   }
+// }
+
+
+
+// Update car (Multipart) - FIXED VERSION
 static Future<Map<String, dynamic>> updateCar({
   required String ownerId,
   required String carId,
@@ -210,50 +275,63 @@ static Future<Map<String, dynamic>> updateCar({
     final uri = Uri.parse('$baseUrl/owner/updatecar/$ownerId/$carId');
     final request = http.MultipartRequest('PUT', uri);
     
+    // Add headers with token
+    final token = await SharedPrefHelper.getToken();
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
     // Add fields
     fields.forEach((key, value) {
       request.fields[key] = value;
     });
     
-    // Add car images
+    print("Number of car images: ${carImages.length}");
+    
+    // ✅ FIX: Use SAME field name 'carImage' for ALL images (like addCar)
     for (int i = 0; i < carImages.length; i++) {
       final file = carImages[i];
       final stream = http.ByteStream(file.openRead());
       final length = await file.length();
       final multipartFile = http.MultipartFile(
-        i == 0 ? 'carImage' : 'carImage_$i',
+        'carImage',  // ✅ Same field name for all images
         stream,
         length,
         filename: file.path.split('/').last,
       );
       request.files.add(multipartFile);
+      print('Added carImage $i: ${file.path}');
     }
     
-    // Add car documents
+    // ✅ FIX: Use SAME field name 'carDocs' for ALL documents (like addCar)
     for (int i = 0; i < carDocs.length; i++) {
       final file = carDocs[i];
       final stream = http.ByteStream(file.openRead());
       final length = await file.length();
       final multipartFile = http.MultipartFile(
-        i == 0 ? 'carDocs' : 'carDocs_$i',
+        'carDocs',  // ✅ Same field name for all docs
         stream,
         length,
         filename: file.path.split('/').last,
       );
       request.files.add(multipartFile);
+      print('Added carDocs $i: ${file.path}');
     }
+    
+    print('Total files in request: ${request.files.length}');
     
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
     final decoded = json.decode(responseBody);
 
-    print("pppppppppp${decoded}");
+    print("Update car response: $decoded");
     
     return {
       'statusCode': response.statusCode,
       'body': decoded,
     };
   } catch (e) {
+    print('Update car error: $e');
     return {
       'statusCode': 500,
       'body': {'success': false, 'message': 'Network error: $e'},

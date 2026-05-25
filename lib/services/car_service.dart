@@ -146,51 +146,87 @@ class CarService {
     }
   }
   
-  // Update car
-  Future<Map<String, dynamic>> updateCar({
-    required String carId,
-    required Map<String, String> fields,
-    List<File>? carImages,
-    List<File>? carDocs,
-  }) async {
-    try {
-      final ownerId = SharedPrefHelper.getOwnerId();
-      if (ownerId == null) {
-        return {
-          'success': false,
-          'message': 'Owner not found',
-        };
+// Update car
+Future<Map<String, dynamic>> updateCar({
+  required String carId,
+  required Map<String, String> fields,
+  List<File>? carImages,
+  List<File>? carDocs,
+}) async {
+  try {
+    // PRINT IMAGE COUNTS
+    print('========== UPDATE CAR IMAGES INFO ==========');
+    print('Car ID: $carId');
+    print('Number of New Car Images: ${carImages?.length ?? 0}');
+    print('Number of New Car Documents: ${carDocs?.length ?? 0}');
+    
+    if (carImages != null && carImages.isNotEmpty) {
+      print('Car Images paths:');
+      for (int i = 0; i < carImages.length; i++) {
+        print('  Image $i: ${carImages[i].path}');
       }
-
-      final response = await ApiService.updateCar(
-        ownerId: ownerId,
-        carId: carId,
-        fields: fields,
-        carImages: carImages ?? [],
-        carDocs: carDocs ?? [],
-      );
-      
-      if (response['statusCode'] == 200 || response['statusCode'] == 201) {
-        final body = response['body'];
-        
-        return {
-          'success': true,
-          'message': body['message'] ?? 'Car updated successfully',
-          'car': body['car'] != null ? CarModel.fromJson(body['car']) : null,
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response['body']['message'] ?? 'Failed to update car',
-        };
+    }
+    
+    if (carDocs != null && carDocs.isNotEmpty) {
+      print('Car Documents paths:');
+      for (int i = 0; i < carDocs.length; i++) {
+        print('  Document $i: ${carDocs[i].path}');
       }
-    } catch (e) {
+    }
+    
+    // Print existing images from fields
+    if (fields.containsKey('existingCarImages')) {
+      print('Existing Car Images: ${fields['existingCarImages']}');
+    }
+    
+    if (fields.containsKey('existingCarDocs')) {
+      print('Existing Car Docs: ${fields['existingCarDocs']}');
+    }
+    
+    print('============================================');
+    
+    final ownerId = SharedPrefHelper.getOwnerId();
+    if (ownerId == null) {
       return {
         'success': false,
-        'message': 'Network error: $e',
+        'message': 'Owner not found',
       };
     }
+
+    final response = await ApiService.updateCar(
+      ownerId: ownerId,
+      carId: carId,
+      fields: fields,
+      carImages: carImages ?? [],
+      carDocs: carDocs ?? [],
+    );
+    
+    // PRINT RESPONSE
+    print('Update Car Response Status: ${response['statusCode']}');
+    print('Update Car Response Body: ${response['body']}');
+    
+    if (response['statusCode'] == 200 || response['statusCode'] == 201) {
+      final body = response['body'];
+      
+      return {
+        'success': true,
+        'message': body['message'] ?? 'Car updated successfully',
+        'car': body['car'] != null ? CarModel.fromJson(body['car']) : null,
+      };
+    } else {
+      return {
+        'success': false,
+        'message': response['body']['message'] ?? 'Failed to update car',
+      };
+    }
+  } catch (e) {
+    print('Update Car Error: $e');
+    return {
+      'success': false,
+      'message': 'Network error: $e',
+    };
   }
+}
   
   // Delete car (if endpoint exists)
   Future<Map<String, dynamic>> deleteCar(String carId) async {
